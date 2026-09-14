@@ -18,11 +18,11 @@ ACTIVE_STAGES = {"目标企业", "有效联系人", "合格线索", "正式询�
 
 def register_features(app, get_db, login_required, now, audit, db_path, upload_folder):
     permissions = {
-        "海外负责人": {"dashboard", "acquisition", "companies", "opportunities", "operations", "inquiries", "quality", "distributors", "intelligence", "translations", "catalog"},
+        "海外负责人": {"dashboard", "acquisition", "companies", "opportunities", "operations", "inquiries", "quality", "distributors", "intelligence", "translations", "catalog", "content"},
         "销售": {"dashboard", "acquisition", "companies", "opportunities", "operations", "inquiries", "intelligence"},
         "产品技术": {"dashboard", "catalog", "translations", "intelligence"},
         "质量": {"dashboard", "quality", "catalog", "operations"},
-        "内容运营": {"dashboard", "catalog", "translations", "acquisition"},
+        "内容运营": {"dashboard", "catalog", "translations", "acquisition", "content"},
         "财务": {"dashboard", "operations", "intelligence"},
         "交付": {"dashboard", "operations", "quality"},
     }
@@ -34,7 +34,8 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
         "intelligence": "intelligence", "translations": "translations", "catalog_rules": "catalog",
         "auto_quote": "operations", "sample_update": "operations", "record_payment": "operations",
         "reset_password": "users", "create_backup": "users", "review_translation": "translations",
-        "generate_product_copy": "catalog",
+        "generate_product_copy": "catalog", "content_admin": "content",
+        "content_preview": "content", "restore_content": "content",
     }
 
     @app.before_request
@@ -47,9 +48,17 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
         if role == "管理员":
             return None
         area = endpoint_area.get(request.endpoint)
-        if area and area not in permissions.get(role, set()):
+        if not area or area not in permissions.get(role, set()):
             abort(403, "当前岗位没有访问该模块的权限")
         return None
+
+    def can_access(area):
+        role = session.get("role", "管理员")
+        return role == "管理员" or area in permissions.get(role, set())
+
+    @app.context_processor
+    def permission_context():
+        return {"can_access": can_access}
 
     def admin_only(view):
         @wraps(view)
