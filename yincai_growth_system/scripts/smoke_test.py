@@ -94,7 +94,7 @@ with app.app_context():
     order_id = get_db().execute("SELECT id FROM orders ORDER BY id DESC LIMIT 1").fetchone()["id"]
 assert client.post(f"/admin/samples/{sample_id}/update", data={"csrf_token": csrf, "status": "运输中", "approval_status": "已批准", "sample_fee": 20, "shipping_fee": 45, "courier": "DHL", "tracking_no": "TEST123"}).status_code == 302
 assert client.post(f"/admin/orders/{order_id}/payment", data={"csrf_token": csrf, "amount": 1000, "currency": "USD", "payment_date": "2026-09-14", "method": "电汇"}).status_code == 302
-for path in ["/admin/users", "/admin/catalog-rules", "/admin/auto-quote", "/admin/quality", "/admin/distributors", "/admin/translations", "/admin/system", "/packaging-selector", "/cost-estimator", "/robots.txt", "/sitemap.xml", "/privacy"]:
+for path in ["/admin/users", "/admin/catalog-rules", "/admin/auto-quote", "/admin/quality", "/admin/distributors", "/admin/translations", "/admin/system", "/en/packaging-selector", "/en/cost-estimator", "/robots.txt", "/sitemap.xml", "/en/privacy"]:
     assert client.get(path).status_code == 200, path
 backup = client.post("/admin/system/backup", data={"csrf_token": csrf})
 assert backup.status_code == 200 and "application/zip" in backup.content_type
