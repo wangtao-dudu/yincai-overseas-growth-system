@@ -1,4 +1,8 @@
+import json
+import os
 import secrets
+from datetime import datetime
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from flask import abort, flash, redirect, render_template, request, session, url_for
@@ -76,31 +80,93 @@ CONTENT_FIELDS = (
 )
 
 
+
+EXTRA_TRANSLATIONS = {
+    "en": {"product_database":"PRODUCT DATABASE","products_title":"Packaging selected for real projects.","all":"All","material":"Material","capacity":"Capacity","dimensions":"Dimensions","moq":"Minimum order","sample_time":"Sample time","lead_time":"Production lead time","customization":"Customization","verification":"Verification","request_samples":"Request quote or samples","privacy":"Privacy","quote_title":"Turn your packaging idea into a production route.","submit":"Submit project brief","thanks_title":"Thank you. A packaging specialist will contact you shortly.","reference":"Request reference"},
+    "zh": {"product_database":"产品数据库","products_title":"为真实项目筛选的包装方案。","all":"全部","material":"材料","capacity":"容量","dimensions":"尺寸","moq":"最低采购量","sample_time":"样品周期","lead_time":"生产周期","customization":"定制开发","verification":"质量验证","request_samples":"询价或申请样品","privacy":"隐私政策","quote_title":"把包装创意转化为可执行的量产路径。","submit":"提交项目需求","thanks_title":"感谢提交，包装专员将尽快与您联系。","reference":"需求编号"},
+    "es": {"product_database":"CATÁLOGO DE PRODUCTOS","products_title":"Envases seleccionados para proyectos reales.","all":"Todos","material":"Material","capacity":"Capacidad","dimensions":"Dimensiones","moq":"Pedido mínimo","sample_time":"Plazo de muestra","lead_time":"Plazo de producción","customization":"Personalización","verification":"Verificación","request_samples":"Solicitar precio o muestras","privacy":"Privacidad","quote_title":"Convierta su idea de envase en una ruta de producción.","submit":"Enviar proyecto","thanks_title":"Gracias. Un especialista se pondrá en contacto pronto.","reference":"Referencia"},
+    "pt": {"product_database":"CATÁLOGO DE PRODUTOS","products_title":"Embalagens selecionadas para projetos reais.","all":"Todos","material":"Material","capacity":"Capacidade","dimensions":"Dimensões","moq":"Pedido mínimo","sample_time":"Prazo da amostra","lead_time":"Prazo de produção","customization":"Personalização","verification":"Verificação","request_samples":"Solicitar preço ou amostras","privacy":"Privacidade","quote_title":"Transforme sua ideia de embalagem em uma rota de produção.","submit":"Enviar projeto","thanks_title":"Obrigado. Um especialista entrará em contato em breve.","reference":"Referência"},
+    "fr": {"product_database":"CATALOGUE PRODUITS","products_title":"Des emballages sélectionnés pour des projets réels.","all":"Tous","material":"Matériau","capacity":"Capacité","dimensions":"Dimensions","moq":"Commande minimum","sample_time":"Délai échantillon","lead_time":"Délai production","customization":"Personnalisation","verification":"Vérification","request_samples":"Demander un prix ou des échantillons","privacy":"Confidentialité","quote_title":"Transformez votre idée en parcours de production.","submit":"Envoyer le projet","thanks_title":"Merci. Un spécialiste vous contactera rapidement.","reference":"Référence"},
+    "de": {"product_database":"PRODUKTKATALOG","products_title":"Verpackungen für reale Projekte ausgewählt.","all":"Alle","material":"Material","capacity":"Volumen","dimensions":"Abmessungen","moq":"Mindestmenge","sample_time":"Musterzeit","lead_time":"Produktionszeit","customization":"Individualisierung","verification":"Prüfung","request_samples":"Preis oder Muster anfragen","privacy":"Datenschutz","quote_title":"Machen Sie aus Ihrer Idee einen Produktionsweg.","submit":"Projekt senden","thanks_title":"Vielen Dank. Ein Spezialist meldet sich in Kürze.","reference":"Referenz"},
+    "ar": {"product_database":"كتالوج المنتجات","products_title":"عبوات مختارة لمشاريع حقيقية.","all":"الكل","material":"المادة","capacity":"السعة","dimensions":"الأبعاد","moq":"الحد الأدنى","sample_time":"مدة العينة","lead_time":"مدة الإنتاج","customization":"التخصيص","verification":"التحقق","request_samples":"طلب سعر أو عينات","privacy":"الخصوصية","quote_title":"حوّل فكرة العبوة إلى مسار إنتاج.","submit":"إرسال المشروع","thanks_title":"شكراً لك. سيتواصل معك متخصص قريباً.","reference":"رقم الطلب"},
+    "ja": {"product_database":"製品カタログ","products_title":"実際のプロジェクト向けに選定した包装。","all":"すべて","material":"素材","capacity":"容量","dimensions":"寸法","moq":"最低発注量","sample_time":"サンプル期間","lead_time":"生産期間","customization":"カスタマイズ","verification":"検証","request_samples":"見積り・サンプル依頼","privacy":"プライバシー","quote_title":"包装アイデアを量産ルートへ。","submit":"プロジェクトを送信","thanks_title":"ありがとうございます。担当者よりご連絡します。","reference":"受付番号"},
+    "ko": {"product_database":"제품 카탈로그","products_title":"실제 프로젝트를 위한 패키지.","all":"전체","material":"소재","capacity":"용량","dimensions":"크기","moq":"최소 주문량","sample_time":"샘플 기간","lead_time":"생산 기간","customization":"맞춤 제작","verification":"검증","request_samples":"견적 또는 샘플 요청","privacy":"개인정보","quote_title":"패키지 아이디어를 양산 경로로 전환하세요.","submit":"프로젝트 제출","thanks_title":"감사합니다. 담당자가 곧 연락드리겠습니다.","reference":"요청 번호"},
+    "ru": {"product_database":"КАТАЛОГ ПРОДУКЦИИ","products_title":"Упаковка для реальных проектов.","all":"Все","material":"Материал","capacity":"Объём","dimensions":"Размеры","moq":"Минимальный заказ","sample_time":"Срок образца","lead_time":"Срок производства","customization":"Персонализация","verification":"Проверка","request_samples":"Запросить цену или образцы","privacy":"Конфиденциальность","quote_title":"Превратите идею упаковки в план производства.","submit":"Отправить проект","thanks_title":"Спасибо. Специалист скоро свяжется с вами.","reference":"Номер запроса"},
+}
+for _language, _labels in EXTRA_TRANSLATIONS.items():
+    TRANSLATIONS[_language] = {**EN, **TRANSLATIONS.get(_language, {}), **_labels}
+
+
 def register_v4(app, get_db, login_required, now, audit, upload_folder):
+    public_endpoints = {
+        "public_home": "localized_home", "localized_home": "localized_home",
+        "public_products": "localized_products", "localized_products": "localized_products",
+        "public_product": "localized_product_v4", "localized_product_v4": "localized_product_v4",
+        "packaging_selector": "localized_selector", "localized_selector": "localized_selector",
+        "cost_estimator": "localized_cost_estimator", "localized_cost_estimator": "localized_cost_estimator",
+        "request_quote": "localized_request_quote", "localized_request_quote": "localized_request_quote",
+        "privacy": "localized_privacy", "localized_privacy": "localized_privacy",
+    }
+
+    with app.app_context():
+        db = get_db()
+        db.execute("""CREATE TABLE IF NOT EXISTS content_versions (
+            id INTEGER PRIMARY KEY, language TEXT NOT NULL, payload TEXT NOT NULL,
+            created_by TEXT, created_at TEXT NOT NULL
+        )""")
+        db.commit()
+
     def current_language():
-        requested = request.args.get("lang") or request.form.get("lang")
+        requested = (
+            (request.view_args or {}).get("language")
+            or request.args.get("lang")
+            or request.form.get("lang")
+        )
         if requested in LANGUAGE_LABELS:
             session["public_language"] = requested
-        return session.get("public_language", "en") if session.get("public_language") in LANGUAGE_LABELS else "en"
+        saved = session.get("public_language", "en")
+        return saved if saved in LANGUAGE_LABELS else "en"
 
-    def setting_value(db, key, default=""):
-        row = db.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
-        return row["value"] if row and row["value"] is not None else default
+    def settings_map(db):
+        return {row["key"]: row["value"] for row in db.execute("SELECT key,value FROM settings WHERE key LIKE 'site_%' OR key LIKE 'draft_site_%'")}
 
     def default_content(language):
         return {**CONTENT_DEFAULTS["en"], **CONTENT_DEFAULTS.get(language, {})}
 
-    def load_content(db, language):
+    def load_content(db, language, draft=False):
+        values = settings_map(db)
         defaults = default_content(language)
         content = {}
         for field in CONTENT_FIELDS:
-            content[field] = setting_value(
-                db, f"site_{language}_{field}",
-                setting_value(db, f"site_en_{field}", defaults[field])
-            )
-        content["video_file"] = setting_value(db, "site_video_file")
-        content["video_url"] = setting_value(db, "site_video_url")
+            live = values.get(f"site_{language}_{field}", values.get(f"site_en_{field}", defaults[field]))
+            content[field] = values.get(f"draft_site_{language}_{field}", live) if draft else live
+        content["video_file"] = values.get("draft_site_video_file", values.get("site_video_file", "")) if draft else values.get("site_video_file", "")
+        content["video_url"] = values.get("draft_site_video_url", values.get("site_video_url", "")) if draft else values.get("site_video_url", "")
         return content
+
+    def set_setting(db, key, value):
+        db.execute(
+            """INSERT INTO settings(key,value,updated_at) VALUES(?,?,?)
+               ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at""",
+            (key, value, now())
+        )
+
+    def lurl(endpoint, **values):
+        language = values.pop("language", current_language())
+        target = public_endpoints.get(endpoint)
+        if target:
+            return url_for(target, language=language, **values)
+        return url_for(endpoint, **values)
+
+    def language_url(language):
+        endpoint = request.endpoint or "public_home"
+        target = public_endpoints.get(endpoint, "localized_home")
+        values = dict(request.view_args or {})
+        values.pop("language", None)
+        for key in ("category", "product"):
+            if request.args.get(key):
+                values[key] = request.args[key]
+        return url_for(target, language=language, **values)
 
     @app.context_processor
     def v4_public_context():
@@ -108,8 +174,11 @@ def register_v4(app, get_db, login_required, now, audit, upload_folder):
         return {
             "current_language": language,
             "language_labels": LANGUAGE_LABELS,
-            "t": TRANSLATIONS.get(language, EN),
+            "t": TRANSLATIONS.get(language, TRANSLATIONS["en"]),
             "site": load_content(get_db(), language),
+            "lurl": lurl,
+            "language_url": language_url,
+            "canonical_url": request.base_url,
         }
 
     def normalize_video_url(value):
@@ -120,12 +189,45 @@ def register_v4(app, get_db, login_required, now, audit, upload_folder):
         if parsed.scheme not in {"http", "https"}:
             raise ValueError("视频地址必须以 http:// 或 https:// 开头")
         host = parsed.netloc.lower()
-        if "youtube.com" in host and parsed.path == "/watch":
+        if host in {"www.youtube.com", "youtube.com", "m.youtube.com"} and parsed.path == "/watch":
             video_id = parse_qs(parsed.query).get("v", [""])[0]
-            return f"https://www.youtube.com/embed/{video_id}" if video_id else value
-        if "youtu.be" in host:
+            if video_id:
+                return f"https://www.youtube.com/embed/{video_id}"
+        if host in {"youtu.be", "www.youtu.be"} and parsed.path.strip("/"):
             return f"https://www.youtube.com/embed/{parsed.path.strip('/')}"
-        return value
+        if host in {"vimeo.com", "www.vimeo.com"} and parsed.path.strip("/").isdigit():
+            return f"https://player.vimeo.com/video/{parsed.path.strip('/')}"
+        if parsed.path.lower().endswith((".mp4", ".mov", ".webm")):
+            return value
+        if (host in {"www.youtube.com", "youtube.com"} and "/embed/" in parsed.path) or (host == "player.vimeo.com" and "/video/" in parsed.path):
+            return value
+        raise ValueError("仅支持 YouTube、Vimeo 或 HTTPS 直链视频")
+
+    def validate_video(file):
+        extension = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+        if extension not in {"mp4", "mov", "webm"}:
+            raise ValueError("视频仅支持 MP4、MOV 或 WEBM")
+        file.stream.seek(0, 2)
+        size = file.stream.tell()
+        file.stream.seek(0)
+        if size <= 0 or size > 100 * 1024 * 1024:
+            raise ValueError("视频必须小于100兆")
+        head = file.stream.read(16)
+        file.stream.seek(0)
+        valid = (extension in {"mp4", "mov"} and len(head) >= 12 and head[4:8] == b"ftyp") or (extension == "webm" and head.startswith(b"\x1a\x45\xdf\xa3"))
+        if not valid:
+            raise ValueError("视频内容与扩展名不一致")
+        return extension
+
+    def remove_upload(filename):
+        if not filename:
+            return
+        path = Path(upload_folder) / Path(filename).name
+        try:
+            if path.is_file():
+                path.unlink()
+        except OSError:
+            pass
 
     @app.route("/admin/content", methods=["GET", "POST"])
     @login_required
@@ -137,47 +239,138 @@ def register_v4(app, get_db, login_required, now, audit, upload_folder):
         if language not in LANGUAGE_LABELS:
             language = "en"
         if request.method == "POST":
+            action = request.form.get("action", "draft")
+            prefix = "site" if action == "publish" else "draft_site"
             for field in CONTENT_FIELDS:
-                key = f"site_{language}_{field}"
-                db.execute(
-                    """INSERT INTO settings(key,value,updated_at) VALUES(?,?,?)
-                       ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at""",
-                    (key, request.form.get(field, "").strip(), now())
-                )
+                set_setting(db, f"{prefix}_{language}_{field}", request.form.get(field, "").strip())
             try:
                 video_url = normalize_video_url(request.form.get("video_url"))
+                video = request.files.get("video")
+                if video and video.filename:
+                    extension = validate_video(video)
+                    old = load_content(db, language, draft=True).get("video_file")
+                    filename = f"home-{secrets.token_hex(8)}.{extension}"
+                    video.save(Path(upload_folder) / filename)
+                    set_setting(db, "draft_site_video_file", filename)
+                    if action == "publish":
+                        set_setting(db, "site_video_file", filename)
+                    if old and old != filename:
+                        remove_upload(old)
+                if request.form.get("remove_video"):
+                    old = load_content(db, language, draft=True).get("video_file")
+                    set_setting(db, "draft_site_video_file", "")
+                    if action == "publish":
+                        set_setting(db, "site_video_file", "")
+                    remove_upload(old)
+                set_setting(db, "draft_site_video_url", video_url)
+                if action == "publish":
+                    current_draft_video = load_content(db, language, draft=True).get("video_file", "")
+                    set_setting(db, "site_video_file", current_draft_video)
+                    set_setting(db, "site_video_url", video_url)
             except ValueError as exc:
+                db.rollback()
                 flash(str(exc), "error")
                 return redirect(url_for("content_admin", language=language))
-            db.execute(
-                """INSERT INTO settings(key,value,updated_at) VALUES('site_video_url',?,?)
-                   ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at""",
-                (video_url, now())
-            )
-            video = request.files.get("video")
-            if video and video.filename:
-                extension = video.filename.rsplit(".", 1)[-1].lower() if "." in video.filename else ""
-                if extension not in {"mp4", "mov", "webm"}:
-                    flash("视频仅支持 MP4、MOV 或 WEBM", "error")
-                    return redirect(url_for("content_admin", language=language))
-                filename = f"home-{secrets.token_hex(8)}.{extension}"
-                video.save(upload_folder / filename)
+            if action == "publish":
+                for field in CONTENT_FIELDS:
+                    set_setting(db, f"site_{language}_{field}", request.form.get(field, "").strip())
+                    set_setting(db, f"draft_site_{language}_{field}", request.form.get(field, "").strip())
+                snapshot = load_content(db, language, draft=True)
                 db.execute(
-                    """INSERT INTO settings(key,value,updated_at) VALUES('site_video_file',?,?)
-                       ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at""",
-                    (filename, now())
+                    "INSERT INTO content_versions(language,payload,created_by,created_at) VALUES(?,?,?,?)",
+                    (language, json.dumps(snapshot, ensure_ascii=False), session.get("username"), now())
                 )
-            if request.form.get("remove_video"):
-                db.execute(
-                    """INSERT INTO settings(key,value,updated_at) VALUES('site_video_file','',?)
-                       ON CONFLICT(key) DO UPDATE SET value='',updated_at=excluded.updated_at""",
-                    (now(),)
-                )
-            audit("更新海外网站内容", "settings", detail=f"语言：{LANGUAGE_LABELS[language]}")
+                audit("发布海外网站内容", "settings", detail=f"语言：{LANGUAGE_LABELS[language]}")
+                message = "内容已发布到正式网站"
+            else:
+                audit("保存网站内容草稿", "settings", detail=f"语言：{LANGUAGE_LABELS[language]}")
+                message = "草稿已保存，可先预览再发布"
             db.commit()
-            flash("网站内容已保存，刷新前台即可查看", "success")
+            flash(message, "success")
             return redirect(url_for("content_admin", language=language))
-        return render_template(
-            "admin/content.html", languages=LANGUAGE_LABELS,
-            selected_language=language, content=load_content(db, language)
-        )
+        versions = db.execute("SELECT * FROM content_versions WHERE language=? ORDER BY id DESC LIMIT 8", (language,)).fetchall()
+        return render_template("admin/content.html", languages=LANGUAGE_LABELS, selected_language=language, content=load_content(db, language, draft=True), versions=versions)
+
+    @app.get("/admin/content/preview/<language>")
+    @login_required
+    def content_preview(language):
+        if session.get("role") not in {"管理员", "海外负责人", "内容运营"} or language not in LANGUAGE_LABELS:
+            abort(403)
+        products = get_db().execute("SELECT * FROM products WHERE published=1 ORDER BY featured DESC,id DESC LIMIT 8").fetchall()
+        return render_template("public/home.html", products=products, site=load_content(get_db(), language, draft=True), current_language=language, preview_mode=True)
+
+    @app.post("/admin/content/restore/<int:version_id>")
+    @login_required
+    def restore_content(version_id):
+        if session.get("role") not in {"管理员", "海外负责人", "内容运营"}:
+            abort(403)
+        db = get_db()
+        version = db.execute("SELECT * FROM content_versions WHERE id=?", (version_id,)).fetchone()
+        if not version:
+            abort(404)
+        payload = json.loads(version["payload"])
+        for field in CONTENT_FIELDS:
+            set_setting(db, f"draft_site_{version['language']}_{field}", payload.get(field, ""))
+        set_setting(db, "draft_site_video_file", payload.get("video_file", ""))
+        set_setting(db, "draft_site_video_url", payload.get("video_url", ""))
+        audit("恢复网站内容版本", "content_version", version_id)
+        db.commit()
+        flash("历史版本已恢复为草稿，请预览后发布", "success")
+        return redirect(url_for("content_admin", language=version["language"]))
+
+    @app.route("/<language>/", methods=["GET"])
+    def localized_home(language):
+        if language not in LANGUAGE_LABELS:
+            abort(404)
+        return app.view_functions["public_home"]()
+
+    @app.route("/<language>/products", methods=["GET"])
+    def localized_products(language):
+        if language not in LANGUAGE_LABELS:
+            abort(404)
+        return app.view_functions["public_products"]()
+
+    @app.route("/<language>/products/<slug>", methods=["GET"])
+    def localized_product_v4(language, slug):
+        if language not in LANGUAGE_LABELS:
+            abort(404)
+        db = get_db()
+        product = db.execute("SELECT * FROM products WHERE slug=? AND published=1", (slug,)).fetchone()
+        if not product:
+            abort(404)
+        translated = None
+        if language != "en":
+            translated = db.execute("SELECT * FROM product_translations WHERE product_id=? AND language=? AND status='已批准'", (product["id"], language)).fetchone()
+        display = {
+            "name": translated["name"] if translated and translated["name"] else product["name"],
+            "summary": translated["summary"] if translated and translated["summary"] else product["summary"],
+            "description": translated["description"] if translated and translated["description"] else product["description"],
+            "decoration": translated["decoration"] if translated and translated["decoration"] else product["decoration"],
+            "sustainability": translated["sustainability"] if translated and translated["sustainability"] else product["sustainability"],
+        }
+        translations = db.execute("SELECT language FROM product_translations WHERE product_id=? AND status='已批准'", (product["id"],)).fetchall()
+        return render_template("public/product.html", product=product, display=display, translations=translations)
+
+    @app.route("/<language>/packaging-selector", methods=["GET", "POST"])
+    def localized_selector(language):
+        if language not in LANGUAGE_LABELS:
+            abort(404)
+        return app.view_functions["packaging_selector"]()
+
+    @app.route("/<language>/cost-estimator", methods=["GET", "POST"])
+    def localized_cost_estimator(language):
+        if language not in LANGUAGE_LABELS:
+            abort(404)
+        return app.view_functions["cost_estimator"]()
+
+    @app.route("/<language>/request-quote", methods=["GET", "POST"])
+    def localized_request_quote(language):
+        if language not in LANGUAGE_LABELS:
+            abort(404)
+        return app.view_functions["request_quote"]()
+
+    @app.route("/<language>/privacy", methods=["GET"])
+    def localized_privacy(language):
+        if language not in LANGUAGE_LABELS:
+            abort(404)
+        return app.view_functions["privacy"]()

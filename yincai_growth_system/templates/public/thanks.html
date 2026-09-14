@@ -1,9 +1,1 @@
-{% extends "public/base.html" %}
-{% block title %}Request received · {{ company_name }}{% endblock %}
-{% block content %}
-<section class="thanks">
-  <div class="thanks-mark"><span>✓</span></div><span class="eyebrow">REQUEST RECEIVED / SUCCESS</span><h1>Thank you. A packaging specialist will contact you shortly.</h1><p>Your brief has been saved in our business system. We will review product fit, quantity and timing before replying through the contact details you provided.</p>
-  <div class="thanks-steps"><div><b>01</b><span>Brief review</span></div><div><b>02</b><span>Route confirmation</span></div><div><b>03</b><span>Quote or sample plan</span></div></div>
-  <div class="hero-actions"><a class="button primary" href="{{ url_for('public_products',lang=current_language) }}">Continue browsing</a><a class="button ghost" href="{{ url_for('public_home',lang=current_language) }}">Back to home</a></div>
-</section>
-{% endblock %}
+{% extends "public/base.html" %}{% block title %}Request received · {{ company_name }}{% endblock %}{% block content %}<section class="thanks"><div class="thanks-mark"><span>✓</span></div><span class="eyebrow">REQUEST RECEIVED / SUCCESS</span><h1>{{ t.thanks_title }}</h1><p>Your brief has been saved. Keep the reference below for follow-up.</p>{% if inquiry_reference %}<div class="request-reference"><span>{{ t.reference }}</span><b>{{ inquiry_reference }}</b></div>{% endif %}<div class="thanks-steps"><div><b>01</b><span>Brief review</span></div><div><b>02</b><span>Route confirmation</span></div><div><b>03</b><span>Quote or sample plan</span></div></div><div class="hero-actions"><a class="button primary" href="{{ lurl('public_products') }}">{{ t.nav_products }}</a><a class="button ghost" href="{{ lurl('public_home') }}">Home</a></div></section>{% endblock %}

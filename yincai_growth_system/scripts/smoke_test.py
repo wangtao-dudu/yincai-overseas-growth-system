@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 temporary = tempfile.TemporaryDirectory()
+os.environ["APP_ENV"] = "test"
 os.environ["DATABASE_PATH"] = os.path.join(temporary.name, "test.db")
 os.environ["UPLOAD_FOLDER"] = os.path.join(temporary.name, "uploads")
 os.environ["SECRET_KEY"] = "test-secret-key"
@@ -81,7 +82,8 @@ assert client.post("/admin/translations", data={"csrf_token": csrf, "product_id"
 with app.app_context():
     translation_id = get_db().execute("SELECT id FROM product_translations WHERE product_id=? AND language='de'", (product_id,)).fetchone()["id"]
 assert client.post(f"/admin/translations/{translation_id}/review", data={"csrf_token": csrf, "name": "30ml Airless-Flasche", "summary": "Geprüfte Zusammenfassung", "description": "Geprüfte Beschreibung", "status": "已批准"}).status_code == 302
-assert client.get("/language/de/products/30ml-airless-bottle").status_code == 200
+assert client.get("/language/de/products/30ml-airless-bottle").status_code == 301
+assert client.get("/de/products/30ml-airless-bottle").status_code == 200
 assert client.post(f"/admin/products/{product_id}/generate", data={"csrf_token": csrf}).status_code == 302
 assert client.post("/admin/operations", data={"csrf_token": csrf, "kind": "sample", "opportunity_id": opportunity_id, "items": "三件样品", "status": "待确认"}).status_code == 302
 assert client.post("/admin/operations", data={"csrf_token": csrf, "kind": "order", "opportunity_id": opportunity_id, "amount": 4200, "currency": "USD", "gross_margin": 1200, "paid_amount": 0, "payment_status": "待付款", "delivery_status": "待生产"}).status_code == 302
@@ -118,6 +120,7 @@ response = client.post(
         "product": "Airless bottle",
         "quantity": "10000",
         "source": "谷歌广告",
+        "consent": "yes",
     },
 )
 assert response.status_code == 200
@@ -143,9 +146,45 @@ response = client.post(
         "video_title": "Factory story", "video_body": "Visible manufacturing proof",
         "cta_title": "Start the test project", "cta_body": "Testing CMS content",
         "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "action": "publish",
     },
     follow_redirects=False,
 )
 assert response.status_code == 302
 assert b"Test launch headline" in client.get("/?lang=en").data
 assert b"youtube.com/embed/dQw4w9WgXcQ" in client.get("/").data
+
+
+# V4 localized routing, privacy and draft workflow
+for language in ("en", "zh", "es", "pt", "fr", "de", "ar", "ja", "ko", "ru"):
+    assert client.get(f"/{language}/").status_code == 200
+    assert client.get(f"/{language}/products").status_code == 200
+    assert client.get(f"/{language}/privacy").status_code == 200
+
+draft_response = client.post(
+    "/admin/content",
+    data={
+        "csrf_token": csrf, "language": "en", "action": "draft",
+        "hero_kicker": "DRAFT ONLY", "hero_title": "Unpublished draft",
+        "hero_body": "This must stay out of the live page",
+        "metric_1_value": "1", "metric_1_label": "one",
+        "metric_2_value": "2", "metric_2_label": "two",
+        "metric_3_value": "3", "metric_3_label": "three",
+        "video_title": "Draft video", "video_body": "Draft",
+        "video_url": "", "cta_title": "Draft CTA", "cta_body": "Draft",
+    },
+    follow_redirects=False,
+)
+assert draft_response.status_code == 302
+assert b"Unpublished draft" not in client.get("/en/").data
+assert b"Unpublished draft" in client.get("/admin/content/preview/en").data
+with app.app_context():
+    assert get_db().execute("SELECT COUNT(*) n FROM content_versions").fetchone()["n"] >= 1
+
+missing_consent = client.post(
+    "/en/request-quote",
+    data={"csrf_token": csrf, "company_name": "No consent", "contact_name": "Buyer", "email": "buyer@example.com", "product": "Bottle"},
+)
+assert missing_consent.status_code == 200
+assert b"privacy consent" in missing_consent.data
+print("V4 launch-hardening tests passed")

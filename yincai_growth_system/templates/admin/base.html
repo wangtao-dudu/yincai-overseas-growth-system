@@ -14,7 +14,7 @@
     <a class="{{ 'active' if request.endpoint in ['admin_opportunities','update_stage'] }}" href="{{ url_for('admin_opportunities') }}">商机漏斗</a>
     <a class="{{ 'active' if request.endpoint in ['admin_operations','auto_quote'] }}" href="{{ url_for('admin_operations') }}">样品·报价·订单</a>
     <span class="nav-label">内容与供应</span>
-    <a class="{{ 'active' if request.endpoint=='content_admin' }}" href="{{ url_for('content_admin') }}">网站内容与视频</a>
+    {% if session.role in ['管理员','海外负责人','内容运营'] %}<a class="{{ 'active' if request.endpoint in ['content_admin','content_preview'] }}" href="{{ url_for('content_admin') }}">网站内容与视频</a>{% endif %}
     <a class="{{ 'active' if request.endpoint in ['admin_products','edit_product'] }}" href="{{ url_for('admin_products') }}">产品与素材</a>
     <a class="{{ 'active' if request.endpoint=='catalog_rules' }}" href="{{ url_for('catalog_rules') }}">报价与环保数据</a>
     <a class="{{ 'active' if request.endpoint=='translations' }}" href="{{ url_for('translations') }}">多语言审核</a>

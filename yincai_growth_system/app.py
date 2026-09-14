@@ -2,6 +2,7 @@ import os
 import csv
 import io
 import json
+import re
 import smtplib
 from email.message import EmailMessage
 import secrets
@@ -14,6 +15,7 @@ from flask import (
     Flask, abort, flash, g, jsonify, redirect, render_template, request,
     send_from_directory, session, url_for
 )
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
@@ -25,13 +27,23 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "mp4", "mov", "webm",
 STAGES = ["目标企业", "有效联系人", "合格线索", "正式询价", "样品项目", "正式报价", "试单", "批量订单", "已回款", "复购客户"]
 CHANNELS = ["谷歌自然搜索", "谷歌广告", "领英开发", "精准邮件", "社交平台", "海外展会", "海外渠道商", "即时通信", "客户转介绍", "人工录入"]
 
+environment = os.getenv("APP_ENV", "development").lower()
+secret_key = os.getenv("SECRET_KEY", "")
+if environment == "production" and (len(secret_key) < 32 or secret_key == "development-only-change-me"):
+    raise RuntimeError("Production requires a unique SECRET_KEY of at least 32 characters")
+if not secret_key:
+    secret_key = secrets.token_urlsafe(48)
+
 app = Flask(__name__)
 app.config.update(
-    SECRET_KEY=os.getenv("SECRET_KEY", "development-only-change-me"),
+    SECRET_KEY=secret_key,
     MAX_CONTENT_LENGTH=100 * 1024 * 1024,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE", "0") == "1",
 )
+if os.getenv("TRUST_PROXY", "0") == "1":
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 
@@ -197,7 +209,8 @@ def init_db():
         "risk_level": "TEXT DEFAULT '正常'", "risk_reason": "TEXT", "last_risk_check": "TEXT"
     }.items(): add_column("opportunities", column, definition)
     for column, definition in {
-        "visitor_ip": "TEXT", "medium": "TEXT", "campaign": "TEXT", "keyword": "TEXT", "visitor_id": "TEXT"
+        "visitor_ip": "TEXT", "medium": "TEXT", "campaign": "TEXT", "keyword": "TEXT", "visitor_id": "TEXT",
+        "attachment": "TEXT", "consent_at": "TEXT", "consent_language": "TEXT", "privacy_version": "TEXT"
     }.items(): add_column("inquiries", column, definition)
     for column, definition in {
         "sample_fee": "REAL DEFAULT 0", "shipping_fee": "REAL DEFAULT 0", "approval_status": "TEXT DEFAULT '待审批'", "approved_by": "TEXT"
@@ -212,7 +225,11 @@ def init_db():
         "weight_g": "REAL DEFAULT 0", "material_composition": "TEXT", "compliance_docs": "TEXT", "environment_verified": "INTEGER DEFAULT 0"
     }.items(): add_column("products", column, definition)
     username = os.getenv("ADMIN_USERNAME", "admin")
-    password = os.getenv("ADMIN_PASSWORD", "admin123456")
+    password = os.getenv("ADMIN_PASSWORD", "")
+    if environment == "production" and (len(password) < 12 or password == "admin123456"):
+        raise RuntimeError("Production requires a unique ADMIN_PASSWORD of at least 12 characters")
+    if not password:
+        password = "admin123456"
     if not db.execute("SELECT id FROM users WHERE username=?", (username,)).fetchone():
         db.execute(
             "INSERT INTO users(username,password_hash,role,created_at) VALUES(?,?,?,?)",
@@ -232,7 +249,7 @@ def audit(action, entity_type=None, entity_id=None, detail=None):
     db = get_db()
     db.execute("INSERT INTO audit_logs(user_id,username,action,entity_type,entity_id,detail,ip,created_at) VALUES(?,?,?,?,?,?,?,?)", (
         session.get("user_id"), session.get("username"), action, entity_type, entity_id, detail,
-        request.headers.get("X-Forwarded-For", request.remote_addr), now()
+        request.remote_addr, now()
     ))
 
 
@@ -286,14 +303,35 @@ def clean_slug(value):
     return value or secrets.token_hex(4)
 
 
-def save_upload(field):
+def save_upload(field, allowed_extensions=None, max_bytes=100 * 1024 * 1024):
     file = request.files.get(field)
     if not file or not file.filename:
         return None
+    allowed = set(allowed_extensions or ALLOWED_EXTENSIONS)
     extension = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
-    if extension not in ALLOWED_EXTENSIONS:
+    if extension not in allowed:
         raise ValueError("不支持的文件格式")
-    filename = f"{datetime.utcnow():%Y%m%d%H%M%S}-{secrets.token_hex(4)}.{extension}"
+    file.stream.seek(0, 2)
+    size = file.stream.tell()
+    file.stream.seek(0)
+    if size <= 0 or size > max_bytes:
+        raise ValueError(f"文件大小必须在1字节至{max_bytes // 1024 // 1024}兆之间")
+    head = file.stream.read(32)
+    file.stream.seek(0)
+    signatures = {
+        "png": head.startswith(b"\x89PNG\r\n\x1a\n"),
+        "jpg": head.startswith(b"\xff\xd8\xff"),
+        "jpeg": head.startswith(b"\xff\xd8\xff"),
+        "gif": head.startswith((b"GIF87a", b"GIF89a")),
+        "webp": head.startswith(b"RIFF") and head[8:12] == b"WEBP",
+        "pdf": head.startswith(b"%PDF-"),
+        "mp4": len(head) >= 12 and head[4:8] == b"ftyp",
+        "mov": len(head) >= 12 and head[4:8] == b"ftyp",
+        "webm": head.startswith(b"\x1a\x45\xdf\xa3"),
+    }
+    if not signatures.get(extension, False):
+        raise ValueError("文件内容与扩展名不一致")
+    filename = f"{datetime.utcnow():%Y%m%d%H%M%S}-{secrets.token_hex(8)}.{extension}"
     file.save(UPLOAD_FOLDER / filename)
     return filename
 
@@ -342,12 +380,21 @@ def request_quote():
         form = request.form
         if form.get("website_confirm"):
             return "", 204
-        required = [form.get("contact_name"), form.get("email"), form.get("company_name"), form.get("product")]
+        required = [form.get("contact_name"), form.get("email"), form.get("company_name"), form.get("product"), form.get("consent")]
         if not all(required):
-            flash("Please complete the required fields.", "error")
-            return render_template("public/request_quote.html", form=form)
+            flash("Please complete the required fields and confirm the privacy consent.", "error")
+            return render_template("public/request_quote.html", form=form, product=product)
+        email = form.get("email", "").strip()
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
+            flash("Please enter a valid work email address.", "error")
+            return render_template("public/request_quote.html", form=form, product=product)
+        try:
+            attachment = save_upload("reference_file", {"png", "jpg", "jpeg", "webp", "pdf"}, 15 * 1024 * 1024)
+        except ValueError as exc:
+            flash(str(exc), "error")
+            return render_template("public/request_quote.html", form=form, product=product)
         db = get_db()
-        visitor_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+        visitor_ip = request.remote_addr
         recent_limit = (datetime.utcnow()-timedelta(minutes=10)).replace(microsecond=0).isoformat(sep=" ")
         if db.execute("SELECT COUNT(*) n FROM inquiries WHERE visitor_ip=? AND created_at>=?", (visitor_ip, recent_limit)).fetchone()["n"] >= 5:
             return "Too many requests. Please try again later.", 429
@@ -378,9 +425,9 @@ def request_quote():
             (company_id, title, form["product"], form.get("quantity"), form.get("country"), "正式询价", 35, "待分配", "首次人工回复", (datetime.utcnow()+timedelta(hours=2)).replace(microsecond=0).isoformat(sep=" "), stamp, stamp)
         )
         opportunity_id = cur.lastrowid
-        db.execute(
-            "INSERT INTO inquiries(opportunity_id,company_id,contact_name,email,phone,country,company_name,product,quantity,material,decoration,timeline,message,source,landing_page,visitor_ip,medium,campaign,keyword,visitor_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (opportunity_id, company_id, form["contact_name"], form["email"], form.get("phone"), form.get("country"), form["company_name"], form["product"], form.get("quantity"), form.get("material"), form.get("decoration"), form.get("timeline"), form.get("message"), source, request.referrer or request.path, visitor_ip, medium, campaign, keyword, visitor_id, stamp)
+        inquiry = db.execute(
+            "INSERT INTO inquiries(opportunity_id,company_id,contact_name,email,phone,country,company_name,product,quantity,material,decoration,timeline,message,source,landing_page,visitor_ip,medium,campaign,keyword,visitor_id,attachment,consent_at,consent_language,privacy_version,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (opportunity_id, company_id, form["contact_name"], email, form.get("phone"), form.get("country"), form["company_name"], form["product"], form.get("quantity"), form.get("material"), form.get("decoration"), form.get("timeline"), form.get("message"), source, request.referrer or request.path, visitor_ip, medium, campaign, keyword, visitor_id, attachment, stamp, form.get("lang") or "en", "2026-09", stamp)
         )
         db.execute(
             "INSERT INTO tasks(company_id,opportunity_id,title,assignee,due_at,priority,created_at) VALUES(?,?,?,?,?,?,?)",
@@ -391,7 +438,7 @@ def request_quote():
             send_inquiry_notification(form["company_name"], form["product"], form["email"])
         except (OSError, smtplib.SMTPException):
             pass
-        return render_template("public/thanks.html")
+        return render_template("public/thanks.html", inquiry_reference=f"YC-{inquiry.lastrowid:06d}")
     return render_template("public/request_quote.html", product=product)
 
 
@@ -447,8 +494,8 @@ def admin_products():
     db = get_db()
     if request.method == "POST":
         try:
-            image = save_upload("image")
-            video = save_upload("video")
+            image = save_upload("image", {"png", "jpg", "jpeg", "webp", "gif"}, 10 * 1024 * 1024)
+            video = save_upload("video", {"mp4", "mov", "webm"}, 100 * 1024 * 1024)
         except ValueError as exc:
             flash(str(exc), "error")
             return redirect(url_for("admin_products"))
@@ -480,8 +527,8 @@ def edit_product(product_id):
         abort(404)
     if request.method == "POST":
         try:
-            image = save_upload("image") or product["image"]
-            video = save_upload("video") or product["video"]
+            image = save_upload("image", {"png", "jpg", "jpeg", "webp", "gif"}, 10 * 1024 * 1024) or product["image"]
+            video = save_upload("video", {"mp4", "mov", "webm"}, 100 * 1024 * 1024) or product["video"]
         except ValueError as exc:
             flash(str(exc), "error")
             return redirect(url_for("edit_product", product_id=product_id))
@@ -652,8 +699,17 @@ def robots():
 
 @app.get("/sitemap.xml")
 def sitemap():
-    pages = [request.url_root.rstrip("/"), url_for("public_products", _external=True), url_for("request_quote", _external=True), url_for("privacy", _external=True)]
-    pages += [url_for("public_product", slug=row["slug"], _external=True) for row in get_db().execute("SELECT slug FROM products WHERE published=1")]
+    languages = ("en", "zh", "es", "pt", "fr", "de", "ar", "ja", "ko", "ru")
+    pages = []
+    slugs = [row["slug"] for row in get_db().execute("SELECT slug FROM products WHERE published=1")]
+    for language in languages:
+        pages.extend([
+            url_for("localized_home", language=language, _external=True),
+            url_for("localized_products", language=language, _external=True),
+            url_for("localized_request_quote", language=language, _external=True),
+            url_for("localized_privacy", language=language, _external=True),
+        ])
+        pages.extend(url_for("localized_product_v4", language=language, slug=slug, _external=True) for slug in slugs)
     xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + ''.join(f'<url><loc>{page}</loc></url>' for page in pages) + '</urlset>'
     return xml, 200, {"Content-Type": "application/xml"}
 
@@ -669,7 +725,7 @@ def track_event():
     if not data.get("event_name"):
         return jsonify({"error": "event_name required"}), 400
     get_db().execute("INSERT INTO tracking_events(event_name,source,medium,campaign,keyword,landing_page,visitor_id,ip,payload,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)", (
-        data.get("event_name"), data.get("source"), data.get("medium"), data.get("campaign"), data.get("keyword"), data.get("landing_page"), data.get("visitor_id"), request.headers.get("X-Forwarded-For", request.remote_addr), json.dumps(dict(data), ensure_ascii=False), now()
+        data.get("event_name"), data.get("source"), data.get("medium"), data.get("campaign"), data.get("keyword"), data.get("landing_page"), data.get("visitor_id"), request.remote_addr, json.dumps(dict(data), ensure_ascii=False), now()
     ))
     get_db().commit()
     return jsonify({"status": "recorded"}), 201
