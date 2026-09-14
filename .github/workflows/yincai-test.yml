@@ -1,0 +1,19 @@
+name: Yincai quality gate
+on:
+  push:
+    branches: [main, yincai-v4-redesign]
+  pull_request:
+    branches: [main]
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: yincai_growth_system
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python scripts/smoke_test.py

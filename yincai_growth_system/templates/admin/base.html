@@ -1,20 +1,33 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{% block title %}银彩海外增长系统{% endblock %}</title><link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='acquisition.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='advanced.css') }}"></head>
-<body><aside class="sidebar"><a class="admin-brand" href="{{ url_for('dashboard') }}"><span>银</span><div>银彩海外增长系统<small>全渠道业务工作台</small></div></a><nav>
-  <a class="{{ 'active' if request.endpoint=='dashboard' }}" href="{{ url_for('dashboard') }}">经营总览</a>
-  <a class="{{ 'active' if request.endpoint in ['admin_inquiries'] }}" href="{{ url_for('admin_inquiries') }}">新询价</a>
-  <a class="{{ 'active' if request.endpoint=='admin_acquisition' }}" href="{{ url_for('admin_acquisition') }}">全渠道获客</a>
-  <a class="{{ 'active' if request.endpoint in ['admin_companies','company_detail'] }}" href="{{ url_for('admin_companies') }}">企业与联系人</a>
-  <a class="{{ 'active' if request.endpoint in ['admin_opportunities','update_stage'] }}" href="{{ url_for('admin_opportunities') }}">商机漏斗</a>
-  <a class="{{ 'active' if request.endpoint in ['admin_operations','auto_quote'] }}" href="{{ url_for('admin_operations') }}">样品·报价·订单</a>
-  <a class="{{ 'active' if request.endpoint in ['admin_products','edit_product'] }}" href="{{ url_for('admin_products') }}">产品与素材</a>
-  <a class="{{ 'active' if request.endpoint=='catalog_rules' }}" href="{{ url_for('catalog_rules') }}">报价与环保数据</a>
-  <a class="{{ 'active' if request.endpoint=='quality' }}" href="{{ url_for('quality') }}">客诉与质量</a>
-  <a class="{{ 'active' if request.endpoint=='distributors' }}" href="{{ url_for('distributors') }}">渠道商管理</a>
-  <a class="{{ 'active' if request.endpoint=='translations' }}" href="{{ url_for('translations') }}">多语言审核</a>
-  <a class="{{ 'active' if request.endpoint=='intelligence' }}" href="{{ url_for('intelligence') }}">智能分析与预测</a>
-  {% if session.role=='管理员' %}<a class="{{ 'active' if request.endpoint=='users' }}" href="{{ url_for('users') }}">用户权限</a><a class="{{ 'active' if request.endpoint=='system_admin' }}" href="{{ url_for('system_admin') }}">安全与备份</a>{% endif %}
-  <a href="{{ url_for('public_home') }}" target="_blank">查看海外网站 ↗</a>
-</nav><div class="sidebar-foot"><span>{{ session.username }}</span><form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button>退出</button></form></div></aside>
-<main class="admin-main"><header class="topbar"><div><strong>{% block page_title %}工作台{% endblock %}</strong><small>{% block page_desc %}用数据推进今天最重要的业务{% endblock %}</small></div><div class="top-actions">{{ company_name }}</div></header>
-{% with messages=get_flashed_messages(with_categories=true) %}{% if messages %}<div class="flash-wrap">{% for category,message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}
-<div class="admin-content">{% block content %}{% endblock %}</div></main></body></html>
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0c1713"><title>{% block title %}银彩海外增长系统{% endblock %}</title><link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='acquisition.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='advanced.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='admin-v4.css') }}"></head>
+<body>
+<aside class="sidebar">
+  <a class="admin-brand" href="{{ url_for('dashboard') }}"><span>银</span><div>银彩海外增长系统<small>GLOBAL GROWTH OS · V4</small></div></a>
+  <nav>
+    <span class="nav-label">经营驾驶舱</span>
+    <a class="{{ 'active' if request.endpoint=='dashboard' }}" href="{{ url_for('dashboard') }}">经营总览</a>
+    <a class="{{ 'active' if request.endpoint=='admin_inquiries' }}" href="{{ url_for('admin_inquiries') }}">新询价</a>
+    <a class="{{ 'active' if request.endpoint=='intelligence' }}" href="{{ url_for('intelligence') }}">智能分析与预测</a>
+    <span class="nav-label">客户与销售</span>
+    <a class="{{ 'active' if request.endpoint=='admin_acquisition' }}" href="{{ url_for('admin_acquisition') }}">全渠道获客</a>
+    <a class="{{ 'active' if request.endpoint in ['admin_companies','company_detail'] }}" href="{{ url_for('admin_companies') }}">企业与联系人</a>
+    <a class="{{ 'active' if request.endpoint in ['admin_opportunities','update_stage'] }}" href="{{ url_for('admin_opportunities') }}">商机漏斗</a>
+    <a class="{{ 'active' if request.endpoint in ['admin_operations','auto_quote'] }}" href="{{ url_for('admin_operations') }}">样品·报价·订单</a>
+    <span class="nav-label">内容与供应</span>
+    {% if session.role in ['管理员','海外负责人','内容运营'] %}<a class="{{ 'active' if request.endpoint in ['content_admin','content_preview'] }}" href="{{ url_for('content_admin') }}">网站内容与视频</a>{% endif %}
+    <a class="{{ 'active' if request.endpoint in ['admin_products','edit_product'] }}" href="{{ url_for('admin_products') }}">产品与素材</a>
+    <a class="{{ 'active' if request.endpoint=='catalog_rules' }}" href="{{ url_for('catalog_rules') }}">报价与环保数据</a>
+    <a class="{{ 'active' if request.endpoint=='translations' }}" href="{{ url_for('translations') }}">多语言审核</a>
+    <a class="{{ 'active' if request.endpoint=='quality' }}" href="{{ url_for('quality') }}">客诉与质量</a>
+    <a class="{{ 'active' if request.endpoint=='distributors' }}" href="{{ url_for('distributors') }}">渠道商管理</a>
+    {% if session.role=='管理员' %}<span class="nav-label">系统管理</span><a class="{{ 'active' if request.endpoint=='users' }}" href="{{ url_for('users') }}">用户权限</a><a class="{{ 'active' if request.endpoint=='system_admin' }}" href="{{ url_for('system_admin') }}">安全与备份</a>{% endif %}
+    <a href="{{ url_for('public_home') }}" target="_blank">查看海外网站 ↗</a>
+  </nav>
+  <div class="sidebar-foot"><span>{{ session.username }}</span><form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button>退出</button></form></div>
+</aside>
+<main class="admin-main">
+  <header class="topbar"><div><strong>{% block page_title %}工作台{% endblock %}</strong><small>{% block page_desc %}用数据推进今天最重要的业务{% endblock %}</small></div><div class="top-actions"><span class="topbar-badge">LIVE BUSINESS SYSTEM</span> {{ company_name }}</div></header>
+  {% with messages=get_flashed_messages(with_categories=true) %}{% if messages %}<div class="flash-wrap">{% for category,message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}
+  <div class="admin-content">{% block content %}{% endblock %}</div>
+</main>
+</body></html>

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import shutil
 import sqlite3
 import urllib.request
@@ -11,7 +12,7 @@ from flask import abort, flash, jsonify, redirect, render_template, request, sen
 from werkzeug.security import generate_password_hash
 
 
-LANGUAGES = {"de": "德语", "fr": "法语", "es": "西班牙语", "ar": "阿拉伯语"}
+LANGUAGES = {"zh": "简体中文", "de": "德语", "fr": "法语", "es": "西班牙语", "pt": "葡萄牙语", "ar": "阿拉伯语", "ja": "日语", "ko": "韩语", "ru": "俄语"}
 ACTIVE_STAGES = {"目标企业", "有效联系人", "合格线索", "正式询价", "样品项目", "正式报价", "试单", "批量订单"}
 
 
@@ -100,17 +101,44 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
         db.execute("UPDATE opportunities SET risk_level=?,risk_reason=?,last_risk_check=? WHERE id=?", (level, "；".join(reasons) or "未发现明显风险", now(), opportunity["id"]))
         return level
 
-    def recommend_products(db, category, capacity, material, quantity):
+    def recommend_products(db, category, capacity, material, quantity, use_case="", dispensing="", sustainability=""):
         rows = db.execute("SELECT p.*,q.tier1_min,q.tier2_min,q.tier3_min FROM products p LEFT JOIN quote_rules q ON q.product_id=p.id WHERE p.published=1").fetchall()
         results = []
+        requested = any((category, capacity, material, use_case, dispensing, sustainability))
         for product in rows:
-            score, reasons = 20, []
-            if category and category.lower() in (product["category"] or "").lower(): score += 35; reasons.append("产品类型匹配")
-            if capacity and capacity.lower() in (product["capacity"] or "").lower(): score += 25; reasons.append("容量匹配")
-            if material and material.lower() in (product["material"] or "").lower(): score += 15; reasons.append("材料匹配")
+            searchable = " ".join(str(product[key] or "") for key in (
+                "category", "name", "summary", "description", "material", "capacity",
+                "decoration", "sustainability", "material_composition"
+            )).lower()
+            score, reasons = (0 if requested else 50), []
+            criteria = (
+                (category, 28, "产品类型匹配"),
+                (capacity, 22, "容量匹配"),
+                (material, 18, "材料匹配"),
+                (use_case, 12, "使用场景匹配"),
+                (dispensing, 10, "出料方式匹配"),
+                (sustainability, 10, "环保目标匹配"),
+            )
+            for value, weight, reason in criteria:
+                if value and value.lower() in searchable:
+                    score += weight
+                    reasons.append(reason)
             minimum = product["tier1_min"] or 0
-            if quantity and minimum and quantity >= minimum: score += 5; reasons.append("采购量满足起订要求")
-            results.append((min(score, 100), reasons, product))
+            if not minimum and product["moq"]:
+                match = re.search(r"[\d,]+", str(product["moq"]))
+                minimum = int(match.group(0).replace(",", "")) if match else 0
+            if quantity and minimum:
+                if quantity >= minimum:
+                    score += 10
+                    reasons.append("采购量满足起订要求")
+                else:
+                    score -= 25
+                    reasons.append(f"低于参考起订量 {minimum:,}")
+            elif quantity:
+                reasons.append("起订量需人工确认")
+            score = max(0, min(score, 100))
+            if not requested or score >= 40:
+                results.append((score, reasons, product))
         return sorted(results, key=lambda item: item[0], reverse=True)[:5]
 
     @app.route("/admin/users", methods=["GET", "POST"])
@@ -271,28 +299,114 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
 
     @app.route("/packaging-selector", methods=["GET", "POST"])
     def packaging_selector():
-        db=get_db(); results=[]
-        if request.method=="POST": results=recommend_products(db,request.form.get("category",""),request.form.get("capacity",""),request.form.get("material",""),int(request.form.get("quantity") or 0))
-        categories=db.execute("SELECT DISTINCT category FROM products WHERE published=1 AND category!='' ORDER BY category").fetchall(); return render_template("public/selector.html",results=results,categories=categories)
+        db = get_db()
+        results = []
+        submitted = request.method == "POST"
+        form_data = {
+            "category": request.form.get("category", "").strip(),
+            "capacity": request.form.get("capacity", "").strip(),
+            "material": request.form.get("material", "").strip(),
+            "use_case": request.form.get("use_case", "").strip(),
+            "dispensing": request.form.get("dispensing", "").strip(),
+            "sustainability": request.form.get("sustainability", "").strip(),
+            "quantity": request.form.get("quantity", "10000").strip(),
+        }
+        published_count = db.execute("SELECT COUNT(*) n FROM products WHERE published=1").fetchone()["n"]
+        if submitted:
+            try:
+                quantity = max(0, int(form_data["quantity"] or 0))
+            except ValueError:
+                quantity = 0
+                flash("Please enter a valid order quantity.", "error")
+            if not published_count:
+                flash("No published products are available yet. Please request a tailored recommendation.", "info")
+            else:
+                results = recommend_products(
+                    db, form_data["category"], form_data["capacity"],
+                    form_data["material"], quantity, form_data["use_case"],
+                    form_data["dispensing"], form_data["sustainability"]
+                )
+                if not results:
+                    flash("No sufficiently strong match was found. Send your brief and our packaging team will recommend alternatives.", "info")
+        categories = db.execute(
+            "SELECT DISTINCT category FROM products WHERE published=1 AND category!='' ORDER BY category"
+        ).fetchall()
+        return render_template(
+            "public/selector.html", results=results, categories=categories,
+            submitted=submitted, has_products=bool(published_count), form_data=form_data
+        )
 
     @app.route("/cost-estimator", methods=["GET", "POST"])
     def cost_estimator():
-        db=get_db(); result=None
-        if request.method=="POST":
-            quantity=int(request.form["quantity"]); rule=db.execute("SELECT q.*,p.name FROM quote_rules q JOIN products p ON p.id=q.product_id WHERE q.product_id=?",(request.form["product_id"],)).fetchone()
-            if rule:
-                unit=rule["tier3_price"] if quantity>=rule["tier3_min"] else rule["tier2_price"] if quantity>=rule["tier2_min"] else rule["tier1_price"] if quantity>=rule["tier1_min"] else None
-                if unit is not None:
-                    low=quantity*(unit+rule["packaging_unit_cost"]); high=low+quantity*rule["decoration_unit_cost"]+rule["tooling_cost"]; result={"product":rule["name"],"low":low,"high":high,"currency":rule["currency"],"quantity":quantity}
-                else: flash("数量低于该产品起订量", "error")
-        products=db.execute("SELECT p.id,p.name FROM products p JOIN quote_rules q ON q.product_id=p.id WHERE p.published=1 AND q.active=1").fetchall(); return render_template("public/cost_estimator.html",products=products,result=result)
+        db = get_db()
+        result = None
+        submitted = request.method == "POST"
+        form_data = {
+            "product_id": request.form.get("product_id", ""),
+            "quantity": request.form.get("quantity", "10000").strip(),
+            "include_decoration": bool(request.form.get("include_decoration")),
+            "include_tooling": bool(request.form.get("include_tooling")),
+        }
+        products = db.execute(
+            """SELECT p.id,p.name,p.moq FROM products p
+               JOIN quote_rules q ON q.product_id=p.id
+               WHERE p.published=1 AND q.active=1
+               ORDER BY p.name"""
+        ).fetchall()
+        if submitted:
+            try:
+                quantity = max(1, int(form_data["quantity"]))
+                product_id = int(form_data["product_id"])
+            except (TypeError, ValueError):
+                quantity = product_id = 0
+                flash("Select a product and enter a valid quantity.", "error")
+            rule = None
+            if product_id:
+                rule = db.execute(
+                    """SELECT q.*,p.name FROM quote_rules q
+                       JOIN products p ON p.id=q.product_id
+                       WHERE q.product_id=? AND q.active=1 AND p.published=1""",
+                    (product_id,)
+                ).fetchone()
+            if not products:
+                flash("Cost rules have not been published yet. Submit a project brief for a manual estimate.", "info")
+            elif not rule:
+                flash("The selected product does not have an active cost rule.", "error")
+            else:
+                unit = (
+                    rule["tier3_price"] if quantity >= rule["tier3_min"] else
+                    rule["tier2_price"] if quantity >= rule["tier2_min"] else
+                    rule["tier1_price"] if quantity >= rule["tier1_min"] else None
+                )
+                if unit is None:
+                    flash(f"Minimum configured quantity: {rule['tier1_min']:,} units.", "error")
+                else:
+                    base = quantity * unit
+                    packaging = quantity * (rule["packaging_unit_cost"] or 0)
+                    decoration = quantity * (rule["decoration_unit_cost"] or 0) if form_data["include_decoration"] else 0
+                    tooling = (rule["tooling_cost"] or 0) if form_data["include_tooling"] else 0
+                    low = base + packaging + decoration + tooling
+                    high = low * 1.08
+                    result = {
+                        "product": rule["name"], "low": low, "high": high,
+                        "currency": rule["currency"], "quantity": quantity,
+                        "unit_low": low / quantity, "unit_high": high / quantity,
+                        "breakdown": {
+                            "base": base, "packaging": packaging,
+                            "decoration": decoration, "tooling": tooling,
+                        },
+                    }
+        return render_template(
+            "public/cost_estimator.html", products=products, result=result,
+            submitted=submitted, has_products=bool(products), form_data=form_data
+        )
 
     @app.get("/language/<language>/products/<slug>")
     def localized_product(language,slug):
         if language not in LANGUAGES: abort(404)
-        row=get_db().execute("SELECT p.*,t.name translated_name,t.summary translated_summary,t.description translated_description,t.decoration translated_decoration,t.sustainability translated_sustainability FROM products p JOIN product_translations t ON t.product_id=p.id AND t.language=? AND t.status='已批准' WHERE p.slug=? AND p.published=1",(language,slug)).fetchone()
+        row=get_db().execute("SELECT id FROM products WHERE slug=? AND published=1",(slug,)).fetchone()
         if not row: abort(404)
-        return render_template("public/localized_product.html",product=row,language=language,language_name=LANGUAGES[language])
+        return redirect(url_for("localized_product_v4", language=language, slug=slug), code=301)
 
     @app.get("/admin/system")
     @login_required
