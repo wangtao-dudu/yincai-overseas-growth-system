@@ -1,11 +1,11 @@
 {% extends "public/base.html" %}
 {% block title %}{{ t.nav_products }} · {{ company_name }}{% endblock %}
 {% block content %}
-<section class="page-title"><span class="eyebrow">{{ t.product_database }}</span><h1>{{ t.products_title }}</h1><p>Specifications, customization routes and production information for faster project decisions.</p></section>
+<section class="page-title"><span class="eyebrow">{{ t.product_database }}</span><h1>{{ t.products_title }}</h1><p>{{ t.products_intro }}</p></section>
 <section class="section compact">
   <nav class="filters" aria-label="Product categories"><a class="{% if not active_category %}active{% endif %}" href="{{ lurl('public_products') }}">{{ t.all }}</a>{% for item in categories %}<a class="{% if active_category == item.category %}active{% endif %}" href="{{ lurl('public_products', category=item.category) }}">{{ item.category }}</a>{% endfor %}</nav>
   <div class="product-grid">
-    {% for product in products %}<a class="product-card" href="{{ lurl('public_product', slug=product.slug) }}"><div class="product-media">{% if product.image %}<img src="{{ url_for('uploaded_file', filename=product.image) }}" alt="{{ product.name }}" loading="lazy">{% else %}<div class="media-placeholder">YC</div>{% endif %}</div><small>{{ product.category }}</small><h3>{{ product.name }}</h3><p>{{ product.summary or 'Custom options available.' }}</p><span class="card-link">View specifications ↗</span></a>
+    {% for product in products %}<a class="product-card" href="{{ lurl('public_product', slug=product.slug) }}"><div class="product-media">{% if product.image %}<img src="{{ url_for('uploaded_file', filename=product.image) }}" alt="{{ product.display_name or product.name }}" loading="lazy">{% else %}<div class="media-placeholder">YC</div>{% endif %}</div><small>{{ product.category }}</small><h3>{{ product.display_name or product.name }}</h3><p>{{ product.display_summary or product.summary or 'Custom options available.' }}</p><span class="card-link">{{ t.view_specs }} ↗</span></a>
     {% else %}<div class="empty-public"><h3>{{ t.no_products }}</h3><p>Send a project brief for a tailored recommendation.</p><a class="button primary" href="{{ lurl('request_quote') }}">{{ t.nav_quote }}</a></div>{% endfor %}
   </div>
 </section>{% endblock %}

@@ -97,6 +97,48 @@ for _language, _labels in EXTRA_TRANSLATIONS.items():
     TRANSLATIONS[_language] = {**EN, **TRANSLATIONS.get(_language, {}), **_labels}
 
 
+FULL_UI = {
+    "en": {
+        "products_intro":"Specifications, customization routes and production information for faster project decisions.","view_specs":"View specifications","selector_intro":"Match product type, usage, dispensing, material, capacity, sustainability and order quantity.","category_label":"Packaging category","any_category":"Any category","use_case":"Use case","dispensing":"Dispensing format","sustainability_goal":"Sustainability goal","estimated_quantity":"Estimated quantity","manual_recommend":"Get a manual recommendation","cost_intro":"Build an early planning range from approved quantity tiers and optional project costs.","product_label":"Product","select_product":"Select a configured product","include_decoration":"Include decoration","include_tooling":"Include tooling","manual_estimate":"Request manual estimate","company_name":"Company name","your_name":"Your name","work_email":"Work email","phone":"Phone / WhatsApp","country":"Country","product_needed":"Product needed","timeline":"Target timeline","project_details":"Project details","reference_file":"Reference image or PDF","consent_text":"I agree that my information and attachment may be used to respond to this request.","privacy_title":"How project information is used.","privacy_intro":"We use submitted information only to evaluate packaging needs, prepare recommendations, communicate quotations and deliver projects. We do not sell contact information.","cookie_title":"Privacy choices","cookie_body":"Optional analytics help us improve this website. They load only after you accept.","essential_only":"Essential only","accept_analytics":"Accept analytics"},
+    "zh": {
+        "products_intro":"查看规格、定制路线与生产信息，更快完成项目决策。","view_specs":"查看规格","selector_intro":"按包装类型、用途、出料方式、材料、容量、环保目标与采购量进行匹配。","category_label":"包装类别","any_category":"不限类别","use_case":"使用场景","dispensing":"出料方式","sustainability_goal":"环保目标","estimated_quantity":"预计采购量","manual_recommend":"获取人工推荐","cost_intro":"基于已审核的数量阶梯和可选项目费用生成前期预算区间。","product_label":"产品","select_product":"选择已配置产品","include_decoration":"计入表面工艺","include_tooling":"计入模具费用","manual_estimate":"申请人工估算","company_name":"公司名称","your_name":"您的姓名","work_email":"工作邮箱","phone":"电话 / WhatsApp","country":"国家或地区","product_needed":"所需产品","timeline":"目标时间","project_details":"项目说明","reference_file":"参考图片或 PDF","consent_text":"我同意银彩使用本人信息及附件回复本次需求。","privacy_title":"我们如何使用项目信息。","privacy_intro":"提交的信息仅用于评估包装需求、提供建议、沟通报价及交付项目；我们不会出售联系人信息。","cookie_title":"隐私选择","cookie_body":"可选访问统计帮助我们改善网站，仅在您同意后加载。","essential_only":"仅必要功能","accept_analytics":"同意统计"},
+    "es": {
+        "products_intro":"Especificaciones, personalización y producción para decidir más rápido.","view_specs":"Ver especificaciones","selector_intro":"Combine tipo, uso, dispensación, material, capacidad, sostenibilidad y cantidad.","category_label":"Categoría de envase","any_category":"Cualquier categoría","use_case":"Uso","dispensing":"Sistema de dispensación","sustainability_goal":"Objetivo sostenible","estimated_quantity":"Cantidad estimada","manual_recommend":"Recomendación manual","cost_intro":"Cree un rango inicial con tarifas aprobadas y costes opcionales.","product_label":"Producto","select_product":"Seleccione un producto","include_decoration":"Incluir decoración","include_tooling":"Incluir moldes","manual_estimate":"Solicitar cálculo manual","company_name":"Empresa","your_name":"Nombre","work_email":"Correo profesional","phone":"Teléfono / WhatsApp","country":"País","product_needed":"Producto necesario","timeline":"Plazo objetivo","project_details":"Detalles del proyecto","reference_file":"Imagen o PDF de referencia","consent_text":"Acepto el uso de mis datos y adjuntos para responder a esta solicitud.","privacy_title":"Cómo utilizamos la información del proyecto.","privacy_intro":"Usamos la información solo para evaluar, recomendar, cotizar y entregar el proyecto. No vendemos datos de contacto.","cookie_title":"Opciones de privacidad","cookie_body":"La analítica opcional solo se carga tras su consentimiento.","essential_only":"Solo esenciales","accept_analytics":"Aceptar analítica"},
+    "pt": {
+        "products_intro":"Especificações, personalização e produção para decisões mais rápidas.","view_specs":"Ver especificações","selector_intro":"Combine tipo, uso, dispensação, material, capacidade, sustentabilidade e quantidade.","category_label":"Categoria da embalagem","any_category":"Qualquer categoria","use_case":"Aplicação","dispensing":"Sistema de dosagem","sustainability_goal":"Meta sustentável","estimated_quantity":"Quantidade estimada","manual_recommend":"Recomendação manual","cost_intro":"Crie uma faixa inicial com preços aprovados e custos opcionais.","product_label":"Produto","select_product":"Selecione um produto","include_decoration":"Incluir decoração","include_tooling":"Incluir ferramental","manual_estimate":"Solicitar estimativa manual","company_name":"Empresa","your_name":"Nome","work_email":"E-mail profissional","phone":"Telefone / WhatsApp","country":"País","product_needed":"Produto necessário","timeline":"Prazo desejado","project_details":"Detalhes do projeto","reference_file":"Imagem ou PDF de referência","consent_text":"Concordo com o uso dos meus dados e anexos para responder a esta solicitação.","privacy_title":"Como usamos as informações do projeto.","privacy_intro":"Usamos os dados apenas para avaliar, recomendar, cotar e entregar o projeto. Não vendemos contatos.","cookie_title":"Opções de privacidade","cookie_body":"A análise opcional só é carregada após o seu consentimento.","essential_only":"Somente essenciais","accept_analytics":"Aceitar análise"},
+    "fr": {
+        "products_intro":"Spécifications, personnalisation et production pour décider plus vite.","view_specs":"Voir les spécifications","selector_intro":"Associez type, usage, distribution, matériau, capacité, durabilité et quantité.","category_label":"Catégorie d’emballage","any_category":"Toutes catégories","use_case":"Usage","dispensing":"Mode de distribution","sustainability_goal":"Objectif durable","estimated_quantity":"Quantité estimée","manual_recommend":"Recommandation manuelle","cost_intro":"Créez une première fourchette avec les tarifs validés et les options.","product_label":"Produit","select_product":"Sélectionnez un produit","include_decoration":"Inclure la décoration","include_tooling":"Inclure l’outillage","manual_estimate":"Demander une estimation","company_name":"Entreprise","your_name":"Votre nom","work_email":"E-mail professionnel","phone":"Téléphone / WhatsApp","country":"Pays","product_needed":"Produit recherché","timeline":"Délai cible","project_details":"Détails du projet","reference_file":"Image ou PDF de référence","consent_text":"J’accepte l’utilisation de mes données et pièces jointes pour répondre à cette demande.","privacy_title":"Utilisation des informations du projet.","privacy_intro":"Les données servent uniquement à évaluer, conseiller, chiffrer et livrer le projet. Nous ne vendons aucune coordonnée.","cookie_title":"Choix de confidentialité","cookie_body":"Les statistiques facultatives ne sont chargées qu’après votre accord.","essential_only":"Essentiels uniquement","accept_analytics":"Accepter les statistiques"},
+    "de": {
+        "products_intro":"Spezifikationen, Veredelung und Produktion für schnellere Entscheidungen.","view_specs":"Spezifikationen ansehen","selector_intro":"Verpackungsart, Anwendung, Dosierung, Material, Volumen, Nachhaltigkeit und Menge abgleichen.","category_label":"Verpackungskategorie","any_category":"Alle Kategorien","use_case":"Anwendung","dispensing":"Dosiersystem","sustainability_goal":"Nachhaltigkeitsziel","estimated_quantity":"Geschätzte Menge","manual_recommend":"Manuelle Empfehlung","cost_intro":"Erstellen Sie eine erste Spanne aus freigegebenen Preisen und Optionen.","product_label":"Produkt","select_product":"Produkt auswählen","include_decoration":"Veredelung einbeziehen","include_tooling":"Werkzeugkosten einbeziehen","manual_estimate":"Manuelle Kalkulation","company_name":"Unternehmen","your_name":"Ihr Name","work_email":"Geschäftliche E-Mail","phone":"Telefon / WhatsApp","country":"Land","product_needed":"Gesuchtes Produkt","timeline":"Zieltermin","project_details":"Projektdetails","reference_file":"Referenzbild oder PDF","consent_text":"Ich stimme der Nutzung meiner Daten und Anhänge zur Beantwortung dieser Anfrage zu.","privacy_title":"So verwenden wir Projektinformationen.","privacy_intro":"Daten werden nur für Bewertung, Empfehlung, Angebot und Lieferung verwendet. Kontaktdaten werden nicht verkauft.","cookie_title":"Datenschutzauswahl","cookie_body":"Optionale Analysen laden wir erst nach Ihrer Zustimmung.","essential_only":"Nur erforderlich","accept_analytics":"Analyse akzeptieren"},
+    "ar": {
+        "products_intro":"المواصفات وخيارات التخصيص والإنتاج لاتخاذ قرار أسرع.","view_specs":"عرض المواصفات","selector_intro":"طابق النوع والاستخدام ونظام التوزيع والمادة والسعة والاستدامة والكمية.","category_label":"فئة العبوة","any_category":"كل الفئات","use_case":"الاستخدام","dispensing":"نظام التوزيع","sustainability_goal":"هدف الاستدامة","estimated_quantity":"الكمية المتوقعة","manual_recommend":"توصية يدوية","cost_intro":"أنشئ نطاقاً أولياً وفق الأسعار المعتمدة والتكاليف الاختيارية.","product_label":"المنتج","select_product":"اختر منتجاً","include_decoration":"إضافة الزخرفة","include_tooling":"إضافة تكلفة القالب","manual_estimate":"طلب تقدير يدوي","company_name":"اسم الشركة","your_name":"الاسم","work_email":"البريد المهني","phone":"الهاتف / واتساب","country":"الدولة","product_needed":"المنتج المطلوب","timeline":"الموعد المستهدف","project_details":"تفاصيل المشروع","reference_file":"صورة أو PDF مرجعي","consent_text":"أوافق على استخدام بياناتي ومرفقاتي للرد على هذا الطلب.","privacy_title":"كيفية استخدام معلومات المشروع.","privacy_intro":"نستخدم المعلومات للتقييم والتوصية والتسعير والتنفيذ فقط، ولا نبيع بيانات الاتصال.","cookie_title":"خيارات الخصوصية","cookie_body":"لا يتم تحميل التحليلات الاختيارية إلا بعد موافقتك.","essential_only":"الضروري فقط","accept_analytics":"قبول التحليلات"},
+    "ja": {
+        "products_intro":"仕様・カスタマイズ・生産情報を確認し、判断を迅速化します。","view_specs":"仕様を見る","selector_intro":"容器タイプ、用途、吐出方式、素材、容量、環境目標、数量から照合します。","category_label":"容器カテゴリー","any_category":"すべて","use_case":"用途","dispensing":"吐出方式","sustainability_goal":"環境目標","estimated_quantity":"予定数量","manual_recommend":"担当者に相談","cost_intro":"承認済み価格帯と追加費用から初期予算を算出します。","product_label":"製品","select_product":"製品を選択","include_decoration":"加飾費を含む","include_tooling":"金型費を含む","manual_estimate":"個別見積りを依頼","company_name":"会社名","your_name":"お名前","work_email":"業務用メール","phone":"電話 / WhatsApp","country":"国・地域","product_needed":"希望製品","timeline":"希望時期","project_details":"プロジェクト詳細","reference_file":"参考画像またはPDF","consent_text":"本依頼への回答のため、情報と添付資料が使用されることに同意します。","privacy_title":"プロジェクト情報の利用について。","privacy_intro":"情報は評価、提案、見積り、納品のためだけに使用し、連絡先を販売しません。","cookie_title":"プライバシー設定","cookie_body":"任意のアクセス解析は同意後にのみ読み込まれます。","essential_only":"必須のみ","accept_analytics":"解析に同意"},
+    "ko": {
+        "products_intro":"사양, 맞춤 제작 및 생산 정보를 확인해 더 빠르게 결정하세요.","view_specs":"사양 보기","selector_intro":"용기 유형, 용도, 토출 방식, 소재, 용량, 친환경 목표와 수량을 매칭합니다.","category_label":"패키지 카테고리","any_category":"전체","use_case":"용도","dispensing":"토출 방식","sustainability_goal":"친환경 목표","estimated_quantity":"예상 수량","manual_recommend":"담당자 추천 받기","cost_intro":"승인된 가격 구간과 선택 비용으로 초기 예산 범위를 계산합니다.","product_label":"제품","select_product":"제품 선택","include_decoration":"후가공 포함","include_tooling":"금형비 포함","manual_estimate":"수동 견적 요청","company_name":"회사명","your_name":"이름","work_email":"업무 이메일","phone":"전화 / WhatsApp","country":"국가","product_needed":"필요 제품","timeline":"희망 일정","project_details":"프로젝트 상세","reference_file":"참고 이미지 또는 PDF","consent_text":"문의 답변을 위해 정보와 첨부 자료를 사용하는 데 동의합니다.","privacy_title":"프로젝트 정보 이용 안내.","privacy_intro":"정보는 평가, 추천, 견적 및 납품에만 사용하며 연락처를 판매하지 않습니다.","cookie_title":"개인정보 선택","cookie_body":"선택적 분석 기능은 동의 후에만 로드됩니다.","essential_only":"필수 기능만","accept_analytics":"분석 동의"},
+    "ru": {
+        "products_intro":"Характеристики, персонализация и производство для быстрых решений.","view_specs":"Смотреть характеристики","selector_intro":"Сопоставьте тип, применение, дозирование, материал, объём, экологичность и тираж.","category_label":"Категория упаковки","any_category":"Все категории","use_case":"Применение","dispensing":"Способ дозирования","sustainability_goal":"Экологическая цель","estimated_quantity":"Планируемый тираж","manual_recommend":"Рекомендация специалиста","cost_intro":"Рассчитайте начальный диапазон по утверждённым ценам и опциям.","product_label":"Продукт","select_product":"Выберите продукт","include_decoration":"Включить декор","include_tooling":"Включить оснастку","manual_estimate":"Запросить ручной расчёт","company_name":"Компания","your_name":"Ваше имя","work_email":"Рабочая почта","phone":"Телефон / WhatsApp","country":"Страна","product_needed":"Нужный продукт","timeline":"Желаемый срок","project_details":"Описание проекта","reference_file":"Референс или PDF","consent_text":"Я согласен на использование данных и вложений для ответа на запрос.","privacy_title":"Как используются данные проекта.","privacy_intro":"Данные используются только для оценки, рекомендаций, расчёта и поставки. Мы не продаём контакты.","cookie_title":"Настройки конфиденциальности","cookie_body":"Необязательная аналитика загружается только после согласия.","essential_only":"Только необходимые","accept_analytics":"Разрешить аналитику"},
+}
+for _language, _labels in FULL_UI.items():
+    TRANSLATIONS[_language].update(_labels)
+
+PRIVACY_UI = {
+"en":["Information collected","Company and contact details, requirements, quantities, market, timing, reference files and communication records.","Purpose and legal basis","Project evaluation and requested pre-contract service, delivery, compliance and legitimate service improvement.","Retention and access","Access is restricted to authorized personnel. Data is retained only for legitimate business and compliance needs, then securely deleted.","Your choices","Optional analytics load only after consent. Contact us to request access, correction or deletion where applicable."],
+"zh":["收集的信息","公司与联系人资料、产品需求、数量、市场、时间、参考文件及沟通记录。","用途与法律依据","项目评估、客户主动请求的合同前服务、订单交付、合规以及合理的服务改进。","保存与访问","仅授权人员可以访问；数据只在业务与合规所需期限内保存，之后安全删除。","您的选择","可选访问统计仅在同意后加载；您可以联系我们申请访问、更正或删除相关信息。"],
+"es":["Información recopilada","Datos de empresa y contacto, requisitos, cantidades, mercado, plazos, archivos y comunicaciones.","Finalidad y base legal","Evaluación, servicios precontractuales solicitados, entrega, cumplimiento y mejora legítima.","Conservación y acceso","Solo accede personal autorizado. Los datos se conservan el tiempo necesario y luego se eliminan de forma segura.","Sus opciones","La analítica opcional requiere consentimiento. Puede solicitar acceso, corrección o eliminación."],
+"pt":["Informações coletadas","Dados da empresa e contato, requisitos, quantidades, mercado, prazos, arquivos e comunicações.","Finalidade e base legal","Avaliação, serviço pré-contratual solicitado, entrega, conformidade e melhoria legítima.","Retenção e acesso","Somente pessoal autorizado acessa os dados, mantidos pelo período necessário e depois excluídos com segurança.","Suas escolhas","A análise opcional exige consentimento. Você pode solicitar acesso, correção ou exclusão."],
+"fr":["Informations collectées","Coordonnées, besoins, quantités, marché, délais, fichiers de référence et échanges.","Finalité et base légale","Évaluation, service précontractuel demandé, livraison, conformité et amélioration légitime.","Conservation et accès","Accès limité au personnel autorisé; les données sont conservées le temps nécessaire puis supprimées de manière sécurisée.","Vos choix","Les statistiques facultatives exigent votre accord. Vous pouvez demander accès, rectification ou suppression."],
+"de":["Erhobene Daten","Unternehmens- und Kontaktdaten, Anforderungen, Mengen, Markt, Termine, Referenzdateien und Kommunikation.","Zweck und Rechtsgrundlage","Bewertung, angefragte vorvertragliche Leistung, Lieferung, Compliance und berechtigte Verbesserung.","Speicherung und Zugriff","Nur autorisierte Personen haben Zugriff. Daten werden nur so lange wie nötig gespeichert und danach sicher gelöscht.","Ihre Wahl","Optionale Analysen erfordern Zustimmung. Sie können Auskunft, Berichtigung oder Löschung anfordern."],
+"ar":["المعلومات التي نجمعها","بيانات الشركة والاتصال والمتطلبات والكميات والسوق والتوقيت والملفات وسجلات التواصل.","الغرض والأساس القانوني","التقييم والخدمة المطلوبة قبل التعاقد والتسليم والامتثال وتحسين الخدمة المشروع.","الحفظ والوصول","يقتصر الوصول على الموظفين المخولين، وتُحذف البيانات بأمان بعد انتهاء الحاجة التجارية والنظامية.","خياراتك","لا تعمل التحليلات الاختيارية دون موافقتك، ويمكنك طلب الوصول أو التصحيح أو الحذف."],
+"ja":["収集する情報","会社・連絡先、製品要件、数量、市場、時期、参考資料、連絡履歴。","利用目的と法的根拠","評価、依頼された契約前対応、納品、法令順守、正当なサービス改善。","保存とアクセス","権限のある担当者のみがアクセスし、必要期間後に安全に削除します。","お客様の選択","任意の解析には同意が必要です。開示、訂正、削除を依頼できます。"],
+"ko":["수집 정보","회사 및 연락처, 제품 요구사항, 수량, 시장, 일정, 참고 파일과 상담 기록.","목적 및 법적 근거","평가, 요청된 계약 전 서비스, 납품, 규정 준수와 정당한 서비스 개선.","보관 및 접근","승인된 담당자만 접근하며 필요한 기간 이후 안전하게 삭제합니다.","사용자 선택","선택적 분석은 동의 후 작동하며 열람, 수정 또는 삭제를 요청할 수 있습니다."],
+"ru":["Собираемые данные","Сведения о компании и контактах, требования, тираж, рынок, сроки, файлы и переписка.","Цель и правовое основание","Оценка, запрошенная преддоговорная услуга, поставка, соблюдение требований и улучшение сервиса.","Хранение и доступ","Доступ имеют только уполномоченные сотрудники; после необходимого срока данные безопасно удаляются.","Ваш выбор","Необязательная аналитика требует согласия. Можно запросить доступ, исправление или удаление."]
+}
+for _language, _values in PRIVACY_UI.items():
+    for _key, _value in zip(("privacy_collected","privacy_collected_body","privacy_purpose","privacy_purpose_body","privacy_retention","privacy_retention_body","privacy_choices_heading","privacy_choices_body"), _values):
+        TRANSLATIONS[_language][_key] = _value
+
+
 def register_v4(app, get_db, login_required, now, audit, upload_folder):
     public_endpoints = {
         "public_home": "localized_home", "localized_home": "localized_home",
@@ -126,6 +168,35 @@ def register_v4(app, get_db, login_required, now, audit, upload_folder):
             session["public_language"] = requested
         saved = session.get("public_language", "en")
         return saved if saved in LANGUAGE_LABELS else "en"
+
+    def localized_product_rows(db, language, category=None, limit=None):
+        sql = "SELECT * FROM products WHERE published=1"
+        params = []
+        if category:
+            sql += " AND category=?"
+            params.append(category)
+        sql += " ORDER BY featured DESC,id DESC"
+        if limit:
+            sql += " LIMIT ?"
+            params.append(limit)
+        products = [dict(row) for row in db.execute(sql, params).fetchall()]
+        if language != "en" and products:
+            ids = [item["id"] for item in products]
+            placeholders = ",".join("?" for _ in ids)
+            rows = db.execute(
+                f"SELECT * FROM product_translations WHERE language=? AND status='已批准' AND product_id IN ({placeholders})",
+                [language, *ids]
+            ).fetchall()
+            translations = {row["product_id"]: row for row in rows}
+            for item in products:
+                translated = translations.get(item["id"])
+                item["display_name"] = translated["name"] if translated and translated["name"] else item["name"]
+                item["display_summary"] = translated["summary"] if translated and translated["summary"] else item["summary"]
+        else:
+            for item in products:
+                item["display_name"] = item["name"]
+                item["display_summary"] = item["summary"]
+        return products
 
     def settings_map(db):
         return {row["key"]: row["value"] for row in db.execute("SELECT key,value FROM settings WHERE key LIKE 'site_%' OR key LIKE 'draft_site_%'")}
@@ -178,8 +249,33 @@ def register_v4(app, get_db, login_required, now, audit, upload_folder):
             "site": load_content(get_db(), language),
             "lurl": lurl,
             "language_url": language_url,
-            "canonical_url": request.base_url,
+            "canonical_url": request.url_root.rstrip("/") + language_url(language),
         }
+
+    @app.before_request
+    def redirect_legacy_public_urls():
+        legacy = {
+            "public_home": "localized_home",
+            "public_products": "localized_products",
+            "public_product": "localized_product_v4",
+            "packaging_selector": "localized_selector",
+            "cost_estimator": "localized_cost_estimator",
+            "request_quote": "localized_request_quote",
+            "privacy": "localized_privacy",
+        }
+        target = legacy.get(request.endpoint)
+        if not target:
+            return None
+        language = request.args.get("lang")
+        if language not in LANGUAGE_LABELS:
+            language = session.get("public_language", "en")
+        if language not in LANGUAGE_LABELS:
+            language = "en"
+        values = dict(request.view_args or {})
+        query = request.args.to_dict(flat=True)
+        query.pop("lang", None)
+        values.update(query)
+        return redirect(url_for(target, language=language, **values), code=308 if request.method != "GET" else 301)
 
     def normalize_video_url(value):
         value = (value or "").strip()
@@ -322,13 +418,21 @@ def register_v4(app, get_db, login_required, now, audit, upload_folder):
     def localized_home(language):
         if language not in LANGUAGE_LABELS:
             abort(404)
-        return app.view_functions["public_home"]()
+        return render_template("public/home.html", products=localized_product_rows(get_db(), language, limit=8))
 
     @app.route("/<language>/products", methods=["GET"])
     def localized_products(language):
         if language not in LANGUAGE_LABELS:
             abort(404)
-        return app.view_functions["public_products"]()
+        db = get_db()
+        category = request.args.get("category", "")
+        categories = db.execute("SELECT DISTINCT category FROM products WHERE published=1 AND category!='' ORDER BY category").fetchall()
+        return render_template(
+            "public/products.html",
+            products=localized_product_rows(db, language, category=category or None),
+            categories=categories,
+            active_category=category,
+        )
 
     @app.route("/<language>/products/<slug>", methods=["GET"])
     def localized_product_v4(language, slug):

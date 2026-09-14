@@ -29,5 +29,5 @@
     <div><b>Contact</b><a href="mailto:{{ public_email }}">{{ public_email }}</a><a href="tel:{{ public_phone }}">{{ public_phone }}</a><a href="{{ lurl('request_quote') }}">{{ t.nav_quote }}</a></div>
     <div class="footer-meta"><b>Global service</b><p>Asia · Europe · Americas · Middle East</p><p><a href="{{ lurl('privacy') }}">{{ t.privacy }}</a> · © {{ current_year }}</p></div>
   </footer>
-  {% if analytics_id %}<aside class="cookie-banner" data-cookie-banner hidden><div><b>Privacy choices</b><p>Optional analytics help us improve this website. They load only after you accept.</p></div><div><button class="button ghost" type="button" data-cookie-reject>Essential only</button><button class="button primary" type="button" data-cookie-accept>Accept analytics</button></div></aside>{% endif %}
+  {% if analytics_id %}<aside class="cookie-banner" data-cookie-banner hidden><div><b>{{ t.cookie_title }}</b><p>{{ t.cookie_body }}</p></div><div><button class="button ghost" type="button" data-cookie-reject>{{ t.essential_only }}</button><button class="button primary" type="button" data-cookie-accept>{{ t.accept_analytics }}</button></div></aside>{% endif %}
 </body></html>

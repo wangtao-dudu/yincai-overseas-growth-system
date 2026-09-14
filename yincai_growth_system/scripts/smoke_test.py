@@ -18,8 +18,8 @@ from app import app, get_db
 client = app.test_client()
 
 assert client.get("/api/v1/health").status_code == 200
-assert client.get("/").status_code == 200
-assert client.get("/products").status_code == 200
+assert client.get("/").status_code == 301
+assert client.get("/products").status_code == 301
 assert client.get("/admin").status_code == 302
 
 with client.session_transaction() as session:
@@ -74,8 +74,8 @@ response = client.post("/admin/auto-quote", data={"csrf_token": csrf, "product_i
 assert response.status_code == 200 and "4200.00" in response.get_data(as_text=True)
 assert client.post("/admin/intelligence", data={"csrf_token": csrf}).status_code == 302
 assert client.get("/admin/intelligence").status_code == 200
-assert client.post("/packaging-selector", data={"csrf_token": csrf, "category": "Airless", "capacity": "30ml", "material": "PP", "quantity": 10000}).status_code == 200
-assert client.post("/cost-estimator", data={"csrf_token": csrf, "product_id": product_id, "quantity": 10000}).status_code == 200
+assert client.post("/en/packaging-selector", data={"csrf_token": csrf, "category": "Airless", "capacity": "30ml", "material": "PP", "quantity": 10000}).status_code == 200
+assert client.post("/en/cost-estimator", data={"csrf_token": csrf, "product_id": product_id, "quantity": 10000}).status_code == 200
 assert client.post("/admin/distributors", data={"csrf_token": csrf, "name": "测试渠道商", "company_id": company_id, "country": "德国", "annual_target": 100000, "status": "评估中"}).status_code == 302
 assert client.post("/admin/quality", data={"csrf_token": csrf, "company_id": company_id, "category": "泄漏", "severity": "重大", "description": "测试质量问题", "status": "调查中"}).status_code == 302
 assert client.post("/admin/translations", data={"csrf_token": csrf, "product_id": product_id, "language": "de"}).status_code == 302
@@ -84,6 +84,8 @@ with app.app_context():
 assert client.post(f"/admin/translations/{translation_id}/review", data={"csrf_token": csrf, "name": "30ml Airless-Flasche", "summary": "Geprüfte Zusammenfassung", "description": "Geprüfte Beschreibung", "status": "已批准"}).status_code == 302
 assert client.get("/language/de/products/30ml-airless-bottle").status_code == 301
 assert client.get("/de/products/30ml-airless-bottle").status_code == 200
+assert b"30ml Airless-Flasche" in client.get("/de/products").data
+assert b"30ml Airless-Flasche" in client.get("/de/").data
 assert client.post(f"/admin/products/{product_id}/generate", data={"csrf_token": csrf}).status_code == 302
 assert client.post("/admin/operations", data={"csrf_token": csrf, "kind": "sample", "opportunity_id": opportunity_id, "items": "三件样品", "status": "待确认"}).status_code == 302
 assert client.post("/admin/operations", data={"csrf_token": csrf, "kind": "order", "opportunity_id": opportunity_id, "amount": 4200, "currency": "USD", "gross_margin": 1200, "paid_amount": 0, "payment_status": "待付款", "delivery_status": "待生产"}).status_code == 302
@@ -109,7 +111,7 @@ assert sales.get("/admin/companies").status_code == 200
 assert sales.get("/admin/users").status_code == 403
 
 response = client.post(
-    "/request-quote",
+    "/en/request-quote",
     data={
         "csrf_token": csrf,
         "company_name": "海外测试品牌",
@@ -130,7 +132,8 @@ print("全部冒烟测试通过")
 
 
 # V4 public experience and content management
-assert client.get("/?lang=zh").status_code == 200
+assert client.get("/?lang=zh").status_code == 301
+assert client.get("/?lang=zh").headers["Location"].endswith("/zh/")
 assert client.get("/admin/content").status_code == 200
 response = client.post(
     "/admin/content",
@@ -151,8 +154,8 @@ response = client.post(
     follow_redirects=False,
 )
 assert response.status_code == 302
-assert b"Test launch headline" in client.get("/?lang=en").data
-assert b"youtube.com/embed/dQw4w9WgXcQ" in client.get("/").data
+assert b"Test launch headline" in client.get("/en/").data
+assert b"youtube.com/embed/dQw4w9WgXcQ" in client.get("/en/").data
 
 
 # V4 localized routing, privacy and draft workflow
@@ -188,3 +191,20 @@ missing_consent = client.post(
 assert missing_consent.status_code == 200
 assert b"privacy consent" in missing_consent.data
 print("V4 launch-hardening tests passed")
+
+
+# V4.2 canonical routing and localized static interface
+legacy = client.get("/products?lang=de&category=Airless%20bottle")
+assert legacy.status_code == 301
+assert "/de/products" in legacy.headers["Location"]
+german_products = client.get("/de/products")
+assert b'<html lang="de"' in german_products.data
+assert b"Spezifikationen ansehen" in german_products.data
+assert b'rel="canonical"' in german_products.data
+assert german_products.data.count(b'hreflang=') >= 11
+chinese_quote = client.get("/zh/request-quote")
+assert "公司名称".encode() in chinese_quote.data
+assert "我同意银彩".encode() in chinese_quote.data
+analytics_page = client.get("/en/")
+assert b"googletagmanager.com/gtag/js" not in analytics_page.data
+print("V4.2 localization and canonical tests passed")

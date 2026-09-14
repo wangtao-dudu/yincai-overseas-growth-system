@@ -102,12 +102,24 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
         return level
 
     def recommend_products(db, category, capacity, material, quantity, use_case="", dispensing="", sustainability=""):
-        rows = db.execute("SELECT p.*,q.tier1_min,q.tier2_min,q.tier3_min FROM products p LEFT JOIN quote_rules q ON q.product_id=p.id WHERE p.published=1").fetchall()
+        language = (request.view_args or {}).get("language", "en")
+        rows = db.execute(
+            """SELECT p.*,q.tier1_min,q.tier2_min,q.tier3_min,
+                      COALESCE(t.name,p.name) localized_name,
+                      COALESCE(t.summary,p.summary) localized_summary,
+                      COALESCE(t.description,p.description) localized_description
+               FROM products p
+               LEFT JOIN quote_rules q ON q.product_id=p.id
+               LEFT JOIN product_translations t ON t.product_id=p.id AND t.language=? AND t.status='已批准'
+               WHERE p.published=1""",
+            (language,)
+        ).fetchall()
         results = []
         requested = any((category, capacity, material, use_case, dispensing, sustainability))
         for product in rows:
             searchable = " ".join(str(product[key] or "") for key in (
-                "category", "name", "summary", "description", "material", "capacity",
+                "category", "name", "summary", "description", "localized_name",
+                "localized_summary", "localized_description", "material", "capacity",
                 "decoration", "sustainability", "material_composition"
             )).lower()
             score, reasons = (0 if requested else 50), []
@@ -347,11 +359,14 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
             "include_decoration": bool(request.form.get("include_decoration")),
             "include_tooling": bool(request.form.get("include_tooling")),
         }
+        language = (request.view_args or {}).get("language", "en")
         products = db.execute(
-            """SELECT p.id,p.name,p.moq FROM products p
+            """SELECT p.id,p.name,p.moq,COALESCE(t.name,p.name) localized_name FROM products p
                JOIN quote_rules q ON q.product_id=p.id
+               LEFT JOIN product_translations t ON t.product_id=p.id AND t.language=? AND t.status='已批准'
                WHERE p.published=1 AND q.active=1
-               ORDER BY p.name"""
+               ORDER BY localized_name""",
+            (language,)
         ).fetchall()
         if submitted:
             try:
@@ -363,10 +378,11 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
             rule = None
             if product_id:
                 rule = db.execute(
-                    """SELECT q.*,p.name FROM quote_rules q
+                    """SELECT q.*,p.name,COALESCE(t.name,p.name) localized_name FROM quote_rules q
                        JOIN products p ON p.id=q.product_id
+                       LEFT JOIN product_translations t ON t.product_id=p.id AND t.language=? AND t.status='已批准'
                        WHERE q.product_id=? AND q.active=1 AND p.published=1""",
-                    (product_id,)
+                    (language, product_id)
                 ).fetchone()
             if not products:
                 flash("Cost rules have not been published yet. Submit a project brief for a manual estimate.", "info")
@@ -388,7 +404,7 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
                     low = base + packaging + decoration + tooling
                     high = low * 1.08
                     result = {
-                        "product": rule["name"], "low": low, "high": high,
+                        "product": rule["localized_name"], "low": low, "high": high,
                         "currency": rule["currency"], "quantity": quantity,
                         "unit_low": low / quantity, "unit_high": high / quantity,
                         "breakdown": {

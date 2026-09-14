@@ -66,8 +66,8 @@
   <div class="product-grid">
     {% for product in products %}
     <a class="product-card" href="{{ lurl('public_product',slug=product.slug) }}">
-      <div class="product-media">{% if product.image %}<img loading="lazy" src="{{ url_for('uploaded_file',filename=product.image) }}" alt="{{ product.name }}">{% else %}<div class="media-placeholder"><span>YC</span><small>FORM {{ '%02d'|format(loop.index) }}</small></div>{% endif %}<i>VIEW ↗</i></div>
-      <small>{{ product.category or 'COSMETIC PACKAGING' }}</small><h3>{{ product.name }}</h3><p>{{ product.summary or product.material or 'Custom options available.' }}</p>
+      <div class="product-media">{% if product.image %}<img loading="lazy" src="{{ url_for('uploaded_file',filename=product.image) }}" alt="{{ product.display_name or product.name }}">{% else %}<div class="media-placeholder"><span>YC</span><small>FORM {{ '%02d'|format(loop.index) }}</small></div>{% endif %}<i>VIEW ↗</i></div>
+      <small>{{ product.category or 'COSMETIC PACKAGING' }}</small><h3>{{ product.display_name or product.name }}</h3><p>{{ product.display_summary or product.summary or product.material or 'Custom options available.' }}</p>
     </a>
     {% endfor %}
   </div>
