@@ -11,7 +11,7 @@ from flask import abort, flash, jsonify, redirect, render_template, request, sen
 from werkzeug.security import generate_password_hash
 
 
-LANGUAGES = {"de": "德语", "fr": "法语", "es": "西班牙语", "ar": "阿拉伯语"}
+LANGUAGES = {"zh": "简体中文", "de": "德语", "fr": "法语", "es": "西班牙语", "pt": "葡萄牙语", "ar": "阿拉伯语", "ja": "日语", "ko": "韩语", "ru": "俄语"}
 ACTIVE_STAGES = {"目标企业", "有效联系人", "合格线索", "正式询价", "样品项目", "正式报价", "试单", "批量订单"}
 
 
@@ -271,21 +271,93 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
 
     @app.route("/packaging-selector", methods=["GET", "POST"])
     def packaging_selector():
-        db=get_db(); results=[]
-        if request.method=="POST": results=recommend_products(db,request.form.get("category",""),request.form.get("capacity",""),request.form.get("material",""),int(request.form.get("quantity") or 0))
-        categories=db.execute("SELECT DISTINCT category FROM products WHERE published=1 AND category!='' ORDER BY category").fetchall(); return render_template("public/selector.html",results=results,categories=categories)
+        db = get_db()
+        results = []
+        submitted = request.method == "POST"
+        form_data = {
+            "category": request.form.get("category", "").strip(),
+            "capacity": request.form.get("capacity", "").strip(),
+            "material": request.form.get("material", "").strip(),
+            "quantity": request.form.get("quantity", "10000").strip(),
+        }
+        published_count = db.execute("SELECT COUNT(*) n FROM products WHERE published=1").fetchone()["n"]
+        if submitted:
+            try:
+                quantity = max(0, int(form_data["quantity"] or 0))
+            except ValueError:
+                quantity = 0
+                flash("Please enter a valid order quantity.", "error")
+            if not published_count:
+                flash("No published products are available yet. Please request a tailored recommendation.", "info")
+            else:
+                results = recommend_products(
+                    db, form_data["category"], form_data["capacity"],
+                    form_data["material"], quantity
+                )
+                if not results:
+                    flash("No exact match was found. Send your brief and our packaging team will recommend alternatives.", "info")
+        categories = db.execute(
+            "SELECT DISTINCT category FROM products WHERE published=1 AND category!='' ORDER BY category"
+        ).fetchall()
+        return render_template(
+            "public/selector.html", results=results, categories=categories,
+            submitted=submitted, has_products=bool(published_count), form_data=form_data
+        )
 
     @app.route("/cost-estimator", methods=["GET", "POST"])
     def cost_estimator():
-        db=get_db(); result=None
-        if request.method=="POST":
-            quantity=int(request.form["quantity"]); rule=db.execute("SELECT q.*,p.name FROM quote_rules q JOIN products p ON p.id=q.product_id WHERE q.product_id=?",(request.form["product_id"],)).fetchone()
-            if rule:
-                unit=rule["tier3_price"] if quantity>=rule["tier3_min"] else rule["tier2_price"] if quantity>=rule["tier2_min"] else rule["tier1_price"] if quantity>=rule["tier1_min"] else None
-                if unit is not None:
-                    low=quantity*(unit+rule["packaging_unit_cost"]); high=low+quantity*rule["decoration_unit_cost"]+rule["tooling_cost"]; result={"product":rule["name"],"low":low,"high":high,"currency":rule["currency"],"quantity":quantity}
-                else: flash("数量低于该产品起订量", "error")
-        products=db.execute("SELECT p.id,p.name FROM products p JOIN quote_rules q ON q.product_id=p.id WHERE p.published=1 AND q.active=1").fetchall(); return render_template("public/cost_estimator.html",products=products,result=result)
+        db = get_db()
+        result = None
+        submitted = request.method == "POST"
+        form_data = {
+            "product_id": request.form.get("product_id", ""),
+            "quantity": request.form.get("quantity", "10000").strip(),
+        }
+        products = db.execute(
+            """SELECT p.id,p.name,p.moq FROM products p
+               JOIN quote_rules q ON q.product_id=p.id
+               WHERE p.published=1 AND q.active=1
+               ORDER BY p.name"""
+        ).fetchall()
+        if submitted:
+            try:
+                quantity = max(1, int(form_data["quantity"]))
+                product_id = int(form_data["product_id"])
+            except (TypeError, ValueError):
+                quantity = product_id = 0
+                flash("Select a product and enter a valid quantity.", "error")
+            rule = None
+            if product_id:
+                rule = db.execute(
+                    """SELECT q.*,p.name FROM quote_rules q
+                       JOIN products p ON p.id=q.product_id
+                       WHERE q.product_id=? AND q.active=1 AND p.published=1""",
+                    (product_id,)
+                ).fetchone()
+            if not products:
+                flash("Cost rules have not been published yet. Submit a project brief for a manual estimate.", "info")
+            elif not rule:
+                flash("The selected product does not have an active cost rule.", "error")
+            else:
+                unit = (
+                    rule["tier3_price"] if quantity >= rule["tier3_min"] else
+                    rule["tier2_price"] if quantity >= rule["tier2_min"] else
+                    rule["tier1_price"] if quantity >= rule["tier1_min"] else None
+                )
+                if unit is None:
+                    flash(f"Minimum configured quantity: {rule['tier1_min']:,} units.", "error")
+                else:
+                    low = quantity * (unit + rule["packaging_unit_cost"])
+                    high = low + quantity * rule["decoration_unit_cost"] + rule["tooling_cost"]
+                    result = {
+                        "product": rule["name"], "low": low, "high": high,
+                        "currency": rule["currency"], "quantity": quantity,
+                        "unit_low": low / quantity, "unit_high": high / quantity,
+                    }
+        return render_template(
+            "public/cost_estimator.html", products=products, result=result,
+            submitted=submitted, has_products=bool(products), form_data=form_data
+        )
 
     @app.get("/language/<language>/products/<slug>")
     def localized_product(language,slug):

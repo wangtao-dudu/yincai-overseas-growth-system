@@ -758,6 +758,9 @@ from features import register_features
 register_features(app, get_db, login_required, now, audit, DB_PATH, UPLOAD_FOLDER)
 init_db()
 
+from v4 import register_v4
+register_v4(app, get_db, login_required, now, audit, UPLOAD_FOLDER)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
