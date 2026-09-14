@@ -1,0 +1,11 @@
+services:
+  yincai:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    ports:
+      - "8000:8000"
+

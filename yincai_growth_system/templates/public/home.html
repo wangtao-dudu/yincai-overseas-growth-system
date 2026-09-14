@@ -1,0 +1,53 @@
+{% extends "public/base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="eyebrow">COSMETIC PACKAGING MANUFACTURING</div>
+  <h1>From packaging concept<br>to reliable production.</h1>
+  <p>Custom bottles, jars, pumps and closures for beauty brands, contract manufacturers and packaging distributors.</p>
+  <div class="hero-actions">
+    <a class="button primary" href="{{ url_for('public_products') }}">Explore products</a>
+    <a class="button ghost" href="{{ url_for('request_quote') }}">Start a project</a>
+  </div>
+  <div class="proof-strip">
+    <span><b>01</b> Rapid sampling</span><span><b>02</b> Decoration support</span><span><b>03</b> Quality verification</span><span><b>04</b> Global supply</span>
+  </div>
+</section>
+
+<section class="section" id="solutions">
+  <div class="section-head"><div><span class="eyebrow">BUILT AROUND YOUR BUSINESS</span><h2>Packaging solutions, not just containers.</h2></div><p>We match structure, material, decoration and order quantity to your formula, positioning and launch schedule.</p></div>
+  <div class="solution-grid">
+    <article><span>01</span><h3>For beauty brands</h3><p>Distinctive packaging, flexible development and support from first sample to repeat production.</p></article>
+    <article><span>02</span><h3>For manufacturers</h3><p>Fast quotation, multi-product sourcing and dependable project coordination across client programs.</p></article>
+    <article><span>03</span><h3>For distributors</h3><p>Structured product data, regional cooperation and scalable supply for local customer demand.</p></article>
+  </div>
+</section>
+
+<section class="section dark" id="capabilities">
+  <div class="section-head"><div><span class="eyebrow">ONE ACCOUNTABLE PARTNER</span><h2>Control the details that protect your launch.</h2></div></div>
+  <div class="capability-grid">
+    <div><b>Concept</b><p>Product selection and structural recommendations.</p></div>
+    <div><b>Sample</b><p>Color, decoration and functional verification.</p></div>
+    <div><b>Quality</b><p>Leak, fit and appearance control records.</p></div>
+    <div><b>Production</b><p>Defined lead times and progress communication.</p></div>
+  </div>
+</section>
+
+<section class="section products-section">
+  <div class="section-head"><div><span class="eyebrow">SELECTED PRODUCTS</span><h2>Start with proven packaging formats.</h2></div><a href="{{ url_for('public_products') }}">View all products →</a></div>
+  {% if products %}
+  <div class="product-grid">
+    {% for product in products %}
+    <a class="product-card" href="{{ url_for('public_product', slug=product.slug) }}">
+      <div class="product-media">{% if product.image %}<img src="{{ url_for('uploaded_file', filename=product.image) }}" alt="{{ product.name }}">{% else %}<div class="media-placeholder">YC</div>{% endif %}</div>
+      <small>{{ product.category or 'Cosmetic packaging' }}</small><h3>{{ product.name }}</h3><p>{{ product.summary or product.material or 'Custom options available.' }}</p>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-public"><h3>Your next packaging project starts here.</h3><p>Tell us the product type, capacity, quantity and decoration you need. Our team will recommend suitable options.</p><a class="button primary" href="{{ url_for('request_quote') }}">Request recommendations</a></div>
+  {% endif %}
+</section>
+
+<section class="final-cta"><span class="eyebrow">READY TO DEVELOP</span><h2>Send one brief. Receive a practical packaging route.</h2><a class="button light" href="{{ url_for('request_quote') }}">Request a quote</a></section>
+{% endblock %}
+

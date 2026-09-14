@@ -1,0 +1,14 @@
+{% extends "public/base.html" %}
+{% block title %}Products · {{ company_name }}{% endblock %}
+{% block content %}
+<section class="page-title"><span class="eyebrow">PRODUCT DATABASE</span><h1>Packaging selected for real projects.</h1><p>Review specifications, customization routes and production information before requesting samples.</p></section>
+<section class="section compact">
+  <div class="filters"><a class="{% if not active_category %}active{% endif %}" href="{{ url_for('public_products') }}">All</a>{% for item in categories %}<a class="{% if active_category == item.category %}active{% endif %}" href="{{ url_for('public_products', category=item.category) }}">{{ item.category }}</a>{% endfor %}</div>
+  <div class="product-grid">
+    {% for product in products %}
+    <a class="product-card" href="{{ url_for('public_product', slug=product.slug) }}"><div class="product-media">{% if product.image %}<img src="{{ url_for('uploaded_file', filename=product.image) }}" alt="{{ product.name }}">{% else %}<div class="media-placeholder">YC</div>{% endif %}</div><small>{{ product.category }}</small><h3>{{ product.name }}</h3><p>{{ product.summary or 'Custom options available.' }}</p></a>
+    {% else %}<div class="empty-public"><h3>No published products yet.</h3><p>Contact our team for a tailored recommendation.</p></div>{% endfor %}
+  </div>
+</section>
+{% endblock %}
+

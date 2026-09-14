@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Custom cosmetic packaging from concept and sampling to reliable mass production.">
+  <title>{% block title %}{{ company_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='public.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='enhancements.css') }}">
+  {% if analytics_id %}<script async src="https://www.googletagmanager.com/gtag/js?id={{ analytics_id }}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','{{ analytics_id }}');</script>{% endif %}
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('public_home') }}"><span>YC</span>{{ company_name }}</a>
+    <nav>
+      <a href="{{ url_for('public_products') }}">Products</a>
+      <a href="{{ url_for('public_home') }}#solutions">Solutions</a>
+      <a href="{{ url_for('public_home') }}#capabilities">Capabilities</a>
+      <a href="{{ url_for('packaging_selector') }}">Selector</a>
+      <a href="{{ url_for('cost_estimator') }}">Cost estimate</a>
+      <a class="nav-cta" href="{{ url_for('request_quote') }}">Request a quote</a>
+    </nav>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <footer>
+    <div><strong>{{ company_name }}</strong><p>Custom cosmetic packaging for beauty brands and manufacturers.</p></div>
+    <div><p>{{ public_email }}</p><p>{{ public_phone }}</p></div>
+    <div><a href="{{ url_for('request_quote') }}">Request samples</a><p><a href="{{ url_for('privacy') }}">Privacy</a> · © {{ current_year }}</p></div>
+  </footer>
+</body>
+</html>
