@@ -1,7 +1,7 @@
 name: Yincai quality gate
 on:
   push:
-    branches: [main, yincai-v4-redesign]
+    branches: [main, yincai-v4-redesign, yincai-v4.2-fixes]
   pull_request:
     branches: [main]
 jobs:
