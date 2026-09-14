@@ -1,2 +1,20 @@
-{% extends "public/base.html" %}{% block title %}Packaging cost estimate · {{ company_name }}{% endblock %}{% block content %}<section class="page-title"><span class="eyebrow">COST ESTIMATOR</span><h1>Build an early packaging budget.</h1><p>This planning range uses approved quantity tiers and configured production costs. It is not a binding quotation.</p></section><section class="section compact selector-grid"><form method="post" class="public-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label>Product<select name="product_id">{% for p in products %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></label><label>Quantity<input type="number" name="quantity" min="1" value="10000" required></label><button class="button primary">Calculate planning range</button></form><div>{% if result %}<article class="estimate-result"><span class="eyebrow">ESTIMATED RANGE</span><h2>{{ result.currency }} {{ '%.0f'|format(result.low) }} — {{ '%.0f'|format(result.high) }}</h2><p>{{ result.product }} · {{ result.quantity }} units</p><p>The lower value uses the configured product and packing cost. The upper value includes configured decoration and tooling allowances. Freight, tax, testing and project-specific requirements may change the final quotation.</p><a class="button primary" href="{{ url_for('request_quote',product=result.product) }}">Request exact quotation</a></article>{% else %}<div class="empty-public"><h3>Your estimate will appear here.</h3><p>Select a configured product and expected quantity.</p></div>{% endif %}</div></section>{% endblock %}
-
+{% extends "public/base.html" %}
+{% block title %}{{ t.nav_cost }} · {{ company_name }}{% endblock %}
+{% block content %}
+<section class="tool-hero cost"><span class="eyebrow">BUDGET BUILDER / 02</span><h1>{{ t.nav_cost }}</h1><p>Turn approved quantity tiers, decoration and tooling rules into a transparent early planning range.</p></section>
+<section class="tool-shell">
+  <form method="post" class="public-form tool-form" data-working="Calculating range…">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="lang" value="{{ current_language }}">
+    <div class="field-index">01</div><label>Product<select name="product_id" required><option value="">Select a configured product</option>{% for p in products %}<option value="{{ p.id }}" {% if form_data.product_id|string==p.id|string %}selected{% endif %}>{{ p.name }}{% if p.moq %} · MOQ {{ p.moq }}{% endif %}</option>{% endfor %}</select></label>
+    <div class="field-index">02</div><label>Quantity<input type="number" name="quantity" min="1" value="{{ form_data.quantity }}" required></label>
+    <button class="button primary wide" {% if not has_products %}disabled{% endif %}>{{ t.estimate }} <span>→</span></button>
+    <p class="form-note">{% if has_products %}Planning estimate only. Freight, tax and testing are confirmed separately.{% else %}No published pricing rule is available. Ask us for a manual estimate.{% endif %}</p>
+  </form>
+  <div class="tool-results" aria-live="polite">
+    {% if result %}
+      <article class="estimate-result"><span class="eyebrow">ESTIMATED PROJECT RANGE</span><h2>{{ result.currency }} {{ '%.0f'|format(result.low) }} <i>—</i> {{ '%.0f'|format(result.high) }}</h2><p>{{ result.product }} · {{ '{:,}'.format(result.quantity) }} units</p><div class="unit-range"><span>Indicative unit range</span><b>{{ result.currency }} {{ '%.3f'|format(result.unit_low) }} — {{ '%.3f'|format(result.unit_high) }}</b></div><small>Final price depends on decoration, tooling, testing, freight and confirmed specifications.</small><a class="button primary" href="{{ url_for('request_quote',product=result.product,lang=current_language) }}">Turn estimate into exact quote ↗</a></article>
+    {% elif not submitted %}<div class="result-empty"><span>YC / COST ENGINE</span><h2>Your budget range will appear here immediately.</h2><p>Only products with approved public cost rules can be calculated.</p></div>
+    {% elif not has_products %}<div class="result-empty"><span>MANUAL ESTIMATE</span><h2>Share your target and we will calculate it manually.</h2><a class="button ghost" href="{{ url_for('request_quote',lang=current_language) }}">{{ t.nav_quote }}</a></div>{% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -124,3 +124,28 @@ assert response.status_code == 200
 assert b"REQUEST RECEIVED" in response.data
 
 print("全部冒烟测试通过")
+
+
+# V4 public experience and content management
+assert client.get("/?lang=zh").status_code == 200
+assert client.get("/admin/content").status_code == 200
+response = client.post(
+    "/admin/content",
+    data={
+        "csrf_token": csrf,
+        "language": "en",
+        "hero_kicker": "TEST KICKER",
+        "hero_title": "Test launch headline",
+        "hero_body": "Test content body",
+        "metric_1_value": "24h", "metric_1_label": "response",
+        "metric_2_value": "12+", "metric_2_label": "finishes",
+        "metric_3_value": "100%", "metric_3_label": "verification",
+        "video_title": "Factory story", "video_body": "Visible manufacturing proof",
+        "cta_title": "Start the test project", "cta_body": "Testing CMS content",
+        "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    },
+    follow_redirects=False,
+)
+assert response.status_code == 302
+assert b"Test launch headline" in client.get("/?lang=en").data
+assert b"youtube.com/embed/dQw4w9WgXcQ" in client.get("/").data

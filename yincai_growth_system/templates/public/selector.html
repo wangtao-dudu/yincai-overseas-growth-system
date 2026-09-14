@@ -1,2 +1,22 @@
-{% extends "public/base.html" %}{% block title %}Packaging selector · {{ company_name }}{% endblock %}{% block content %}<section class="page-title"><span class="eyebrow">PACKAGING SELECTOR</span><h1>Find a practical starting point.</h1><p>Enter the product type, capacity, material and order quantity. The result explains why each format may fit.</p></section><section class="section compact selector-grid"><form method="post" class="public-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label>Packaging category<select name="category"><option value="">Any category</option>{% for c in categories %}<option>{{ c.category }}</option>{% endfor %}</select></label><label>Capacity<input name="capacity" placeholder="e.g. 30ml, 50ml"></label><label>Preferred material<input name="material" placeholder="e.g. PP, PET, glass"></label><label>Estimated quantity<input type="number" name="quantity" min="1" value="10000"></label><button class="button primary">Show recommendations</button></form><div>{% for score,reasons,p in results %}<article class="recommendation"><span class="score-pill">{{ score }}% match</span><h2>{{ p.name }}</h2><p>{{ reasons|join(' · ') or 'General packaging option' }}</p><p>{{ p.material }} · {{ p.capacity }} · minimum order {{ p.moq }}</p><a class="button ghost" href="{{ url_for('public_product',slug=p.slug) }}">Review product</a></article>{% else %}<div class="empty-public"><h3>Recommendations will appear here.</h3><p>The tool uses published product specifications and order rules. A packaging specialist should confirm formula compatibility before sampling.</p></div>{% endfor %}</div></section>{% endblock %}
-
+{% extends "public/base.html" %}
+{% block title %}{{ t.nav_selector }} · {{ company_name }}{% endblock %}
+{% block content %}
+<section class="tool-hero"><span class="eyebrow">SMART MATCH / 01</span><h1>{{ t.nav_selector }}</h1><p>Define the format, capacity, material and quantity. We rank published products and explain every match.</p></section>
+<section class="tool-shell">
+  <form method="post" class="public-form tool-form" data-working="Matching products…">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="lang" value="{{ current_language }}">
+    <div class="field-index">01</div><label>Packaging category<select name="category"><option value="">Any category</option>{% for c in categories %}<option {% if form_data.category==c.category %}selected{% endif %}>{{ c.category }}</option>{% endfor %}</select></label>
+    <div class="field-index">02</div><label>Capacity<input name="capacity" value="{{ form_data.capacity }}" placeholder="e.g. 30ml, 50ml"></label>
+    <div class="field-index">03</div><label>Preferred material<input name="material" value="{{ form_data.material }}" placeholder="e.g. PP, PET, glass"></label>
+    <div class="field-index">04</div><label>Estimated quantity<input type="number" name="quantity" min="1" value="{{ form_data.quantity }}"></label>
+    <button class="button primary wide" {% if not has_products %}aria-describedby="no-products"{% endif %}>{{ t.recommend }} <span>→</span></button>
+    {% if not has_products %}<p class="form-note" id="no-products">No published products yet. You can still send a project brief for a manual recommendation.</p>{% endif %}
+  </form>
+  <div class="tool-results" aria-live="polite">
+    {% if results %}<div class="result-heading"><span>{{ results|length }} MATCHES</span><b>Ranked for your brief</b></div>{% endif %}
+    {% for score,reasons,p in results %}
+      <article class="recommendation"><div class="score-ring" style="--score:{{ score }}"><b>{{ score }}</b><small>% MATCH</small></div><div><span>{{ p.category or 'PACKAGING' }}</span><h2>{{ p.name }}</h2><p>{{ reasons|join(' · ') or 'Versatile general packaging option' }}</p><small>{{ p.material or 'Material to confirm' }} · {{ p.capacity or 'Custom capacity' }} · MOQ {{ p.moq or 'on request' }}</small><a href="{{ url_for('public_product',slug=p.slug,lang=current_language) }}">Review product ↗</a></div></article>
+    {% else %}{% if not submitted %}<div class="result-empty"><span>YC / MATCH ENGINE</span><h2>Recommendations appear here with an explainable match score.</h2><p>Compatibility and final specifications are confirmed during sampling.</p></div>{% elif not has_products %}<div class="result-empty"><span>MANUAL ROUTE</span><h2>Let our packaging team build the shortlist.</h2><a class="button ghost" href="{{ url_for('request_quote',lang=current_language) }}">{{ t.nav_quote }}</a></div>{% endif %}{% endfor %}
+  </div>
+</section>
+{% endblock %}
