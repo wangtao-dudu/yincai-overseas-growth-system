@@ -1,0 +1,55 @@
+{% extends "admin/base.html" %}
+{% block page_title %}网站页面工作台{% endblock %}{% block page_desc %}按前台页面和板块编辑，不再在一个长表单里寻找字段{% endblock %}
+{% block content %}
+<section class="cms-command panel">
+  <div><span class="admin-kicker">WEBSITE CONTENT STUDIO</span><h2>选择语言，再选择要修改的前台板块</h2><p>保存草稿不会影响正式网站；每个板块可独立预览和发布。</p></div>
+  <form method="get"><input type="hidden" name="page" value="{{ selected_page }}"><label>编辑语言<select name="language" onchange="this.form.submit()">{% for code,label in languages.items() %}<option value="{{ code }}" {% if code==selected_language %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label></form>
+</section>
+
+<div class="cms-workspace">
+  <aside class="cms-pages panel">
+    <div class="cms-pages-head"><span class="admin-kicker">FRONTEND MAP</span><h2>前台页面</h2><p>点击名称，只显示该板块需要维护的内容。</p></div>
+    <nav>{% for key,item in pages.items() %}
+      <a class="{{ 'active' if key==selected_page }}" href="{{ url_for('content_admin',language=selected_language,page=key) }}">
+        <span>{{ item.number }}</span><div><b>{{ item.label }}</b><small>{{ page_status[key].filled }}/{{ page_status[key].total }} 项已填写</small></div>
+        {% if page_status[key].changed %}<i>草稿</i>{% else %}<i class="live">已同步</i>{% endif %}
+      </a>
+    {% endfor %}</nav>
+  </aside>
+
+  <div class="cms-editor-column">
+    <section class="cms-page-head panel">
+      <div><span class="admin-kicker">PAGE {{ page.number }}</span><h1>{{ page.label }}</h1><p>{{ page.description }}</p></div>
+      <div class="cms-head-actions">
+        <a class="admin-button secondary" href="{{ page.path.replace('/en/', '/' ~ selected_language ~ '/') }}" target="_blank">查看线上页面 ↗</a>
+        <a class="admin-button secondary" href="{{ url_for('content_preview',language=selected_language,page=selected_page) }}" target="_blank">预览草稿 ↗</a>
+      </div>
+    </section>
+
+    {% if page.links %}
+    <section class="cms-data-links panel"><div><b>这个板块还引用以下业务数据</b><span>营销文案在本页编辑，产品、规则和价格在对应模块维护。</span></div><div>{% for label,endpoint in page.links %}<a href="{{ url_for(endpoint) }}">{{ label }} →</a>{% endfor %}</div></section>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="content-editor">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="language" value="{{ selected_language }}"><input type="hidden" name="page" value="{{ selected_page }}">
+      {% for group_title,group_desc,fields in page.groups %}
+      <section class="panel editor-section">
+        <div class="editor-heading"><span>{{ '%02d'|format(loop.index) }}</span><div><h2>{{ group_title }}</h2><p>{{ group_desc }}</p></div></div>
+        <div class="admin-form cms-fields">
+          {% for name,label,kind in fields %}
+          <label>{{ label }}{% if kind=='textarea' %}<textarea name="{{ name }}" rows="3">{{ content[name] }}</textarea>{% else %}<input name="{{ name }}" value="{{ content[name] }}">{% endif %}</label>
+          {% endfor %}
+          {% if selected_page=='home' and loop.index==3 %}
+          <div class="cms-media-fields"><label>上传视频<input type="file" name="video" accept="video/mp4,video/quicktime,video/webm"></label><label>或填写 YouTube / Vimeo 地址<input name="video_url" value="{{ content.video_url }}" placeholder="https://www.youtube.com/watch?v=..."></label></div>
+          {% if content.video_file %}<label class="checks"><input type="checkbox" name="remove_video"> 删除当前视频：{{ content.video_file }}</label>{% endif %}
+          {% endif %}
+        </div>
+      </section>
+      {% endfor %}
+      <div class="sticky-save"><div><b>{{ languages[selected_language] }} · {{ page.label }}</b><span>建议流程：保存草稿 → 预览 → 发布</span></div><div class="publish-actions"><button class="admin-button secondary" type="submit" name="action" value="draft">保存草稿</button><a class="admin-button secondary" href="{{ url_for('content_preview',language=selected_language,page=selected_page) }}" target="_blank">预览草稿 ↗</a><button class="admin-button" type="submit" name="action" value="publish">发布此板块</button></div></div>
+    </form>
+  </div>
+</div>
+
+<section class="panel version-panel"><div><span class="admin-kicker">VERSION HISTORY</span><h2>最近发布版本</h2><p>恢复只写入草稿，不会直接覆盖线上内容。</p></div><div class="version-list">{% for version in versions %}<article><div><b>版本 #{{ version.id }}</b><span>{{ version.created_at }} · {{ version.created_by or '系统' }}</span></div><form method="post" action="{{ url_for('restore_content',version_id=version.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="admin-button secondary" type="submit">恢复为草稿</button></form></article>{% else %}<p>发布后将在这里生成可恢复版本。</p>{% endfor %}</div></section>
+{% endblock %}

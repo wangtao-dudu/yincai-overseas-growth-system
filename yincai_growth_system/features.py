@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import shutil
 import sqlite3
 import urllib.request
@@ -11,17 +12,17 @@ from flask import abort, flash, jsonify, redirect, render_template, request, sen
 from werkzeug.security import generate_password_hash
 
 
-LANGUAGES = {"de": "德语", "fr": "法语", "es": "西班牙语", "ar": "阿拉伯语"}
+LANGUAGES = {"zh": "简体中文", "de": "德语", "fr": "法语", "es": "西班牙语", "pt": "葡萄牙语", "ar": "阿拉伯语", "ja": "日语", "ko": "韩语", "ru": "俄语"}
 ACTIVE_STAGES = {"目标企业", "有效联系人", "合格线索", "正式询价", "样品项目", "正式报价", "试单", "批量订单"}
 
 
 def register_features(app, get_db, login_required, now, audit, db_path, upload_folder):
     permissions = {
-        "海外负责人": {"dashboard", "acquisition", "companies", "opportunities", "operations", "inquiries", "quality", "distributors", "intelligence", "translations", "catalog"},
+        "海外负责人": {"dashboard", "acquisition", "companies", "opportunities", "operations", "inquiries", "quality", "distributors", "intelligence", "translations", "catalog", "content"},
         "销售": {"dashboard", "acquisition", "companies", "opportunities", "operations", "inquiries", "intelligence"},
         "产品技术": {"dashboard", "catalog", "translations", "intelligence"},
         "质量": {"dashboard", "quality", "catalog", "operations"},
-        "内容运营": {"dashboard", "catalog", "translations", "acquisition"},
+        "内容运营": {"dashboard", "catalog", "translations", "acquisition", "content"},
         "财务": {"dashboard", "operations", "intelligence"},
         "交付": {"dashboard", "operations", "quality"},
     }
@@ -33,7 +34,8 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
         "intelligence": "intelligence", "translations": "translations", "catalog_rules": "catalog",
         "auto_quote": "operations", "sample_update": "operations", "record_payment": "operations",
         "reset_password": "users", "create_backup": "users", "review_translation": "translations",
-        "generate_product_copy": "catalog",
+        "generate_product_copy": "catalog", "content_admin": "content",
+        "content_preview": "content", "restore_content": "content",
     }
 
     @app.before_request
@@ -46,9 +48,17 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
         if role == "管理员":
             return None
         area = endpoint_area.get(request.endpoint)
-        if area and area not in permissions.get(role, set()):
+        if not area or area not in permissions.get(role, set()):
             abort(403, "当前岗位没有访问该模块的权限")
         return None
+
+    def can_access(area):
+        role = session.get("role", "管理员")
+        return role == "管理员" or area in permissions.get(role, set())
+
+    @app.context_processor
+    def permission_context():
+        return {"can_access": can_access}
 
     def admin_only(view):
         @wraps(view)
@@ -100,17 +110,56 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
         db.execute("UPDATE opportunities SET risk_level=?,risk_reason=?,last_risk_check=? WHERE id=?", (level, "；".join(reasons) or "未发现明显风险", now(), opportunity["id"]))
         return level
 
-    def recommend_products(db, category, capacity, material, quantity):
-        rows = db.execute("SELECT p.*,q.tier1_min,q.tier2_min,q.tier3_min FROM products p LEFT JOIN quote_rules q ON q.product_id=p.id WHERE p.published=1").fetchall()
+    def recommend_products(db, category, capacity, material, quantity, use_case="", dispensing="", sustainability=""):
+        language = (request.view_args or {}).get("language", "en")
+        rows = db.execute(
+            """SELECT p.*,q.tier1_min,q.tier2_min,q.tier3_min,
+                      COALESCE(t.name,p.name) localized_name,
+                      COALESCE(t.summary,p.summary) localized_summary,
+                      COALESCE(t.description,p.description) localized_description
+               FROM products p
+               LEFT JOIN quote_rules q ON q.product_id=p.id
+               LEFT JOIN product_translations t ON t.product_id=p.id AND t.language=? AND t.status='已批准'
+               WHERE p.published=1""",
+            (language,)
+        ).fetchall()
         results = []
+        requested = any((category, capacity, material, use_case, dispensing, sustainability))
         for product in rows:
-            score, reasons = 20, []
-            if category and category.lower() in (product["category"] or "").lower(): score += 35; reasons.append("产品类型匹配")
-            if capacity and capacity.lower() in (product["capacity"] or "").lower(): score += 25; reasons.append("容量匹配")
-            if material and material.lower() in (product["material"] or "").lower(): score += 15; reasons.append("材料匹配")
+            searchable = " ".join(str(product[key] or "") for key in (
+                "category", "name", "summary", "description", "localized_name",
+                "localized_summary", "localized_description", "material", "capacity",
+                "decoration", "sustainability", "material_composition"
+            )).lower()
+            score, reasons = (0 if requested else 50), []
+            criteria = (
+                (category, 28, "产品类型匹配"),
+                (capacity, 22, "容量匹配"),
+                (material, 18, "材料匹配"),
+                (use_case, 12, "使用场景匹配"),
+                (dispensing, 10, "出料方式匹配"),
+                (sustainability, 10, "环保目标匹配"),
+            )
+            for value, weight, reason in criteria:
+                if value and value.lower() in searchable:
+                    score += weight
+                    reasons.append(reason)
             minimum = product["tier1_min"] or 0
-            if quantity and minimum and quantity >= minimum: score += 5; reasons.append("采购量满足起订要求")
-            results.append((min(score, 100), reasons, product))
+            if not minimum and product["moq"]:
+                match = re.search(r"[\d,]+", str(product["moq"]))
+                minimum = int(match.group(0).replace(",", "")) if match else 0
+            if quantity and minimum:
+                if quantity >= minimum:
+                    score += 10
+                    reasons.append("采购量满足起订要求")
+                else:
+                    score -= 25
+                    reasons.append(f"低于参考起订量 {minimum:,}")
+            elif quantity:
+                reasons.append("起订量需人工确认")
+            score = max(0, min(score, 100))
+            if not requested or score >= 40:
+                results.append((score, reasons, product))
         return sorted(results, key=lambda item: item[0], reverse=True)[:5]
 
     @app.route("/admin/users", methods=["GET", "POST"])
@@ -121,9 +170,13 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
         if request.method == "POST":
             username = request.form["username"].strip()
             password = request.form["password"]
+            role = request.form.get("role", "")
+            if not username or len(password) < 12 or role not in {*permissions.keys(), "管理员"}:
+                flash("用户名不能为空，密码至少十二位，并请选择有效岗位", "error")
+                return redirect(url_for("users"))
             try:
-                cur = db.execute("INSERT INTO users(username,password_hash,role,created_at) VALUES(?,?,?,?)", (username, generate_password_hash(password), request.form["role"], now()))
-                audit("创建用户", "user", cur.lastrowid, f"岗位：{request.form['role']}")
+                cur = db.execute("INSERT INTO users(username,password_hash,role,created_at) VALUES(?,?,?,?)", (username, generate_password_hash(password), role, now()))
+                audit("创建用户", "user", cur.lastrowid, f"岗位：{role}")
                 db.commit(); flash("用户已创建", "success")
             except sqlite3.IntegrityError: flash("用户名已经存在", "error")
             return redirect(url_for("users"))
@@ -133,8 +186,15 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
     @login_required
     @admin_only
     def reset_password(user_id):
-        get_db().execute("UPDATE users SET password_hash=? WHERE id=?", (generate_password_hash(request.form["password"]), user_id))
-        audit("重置密码", "user", user_id); get_db().commit(); flash("密码已重置", "success")
+        password = request.form.get("password", "")
+        if len(password) < 12:
+            flash("新密码至少十二位", "error")
+            return redirect(url_for("users"))
+        db = get_db()
+        cursor = db.execute("UPDATE users SET password_hash=? WHERE id=?", (generate_password_hash(password), user_id))
+        if not cursor.rowcount:
+            abort(404)
+        audit("重置密码", "user", user_id); db.commit(); flash("密码已重置", "success")
         return redirect(url_for("users"))
 
     @app.route("/admin/catalog-rules", methods=["GET", "POST"])
@@ -204,9 +264,20 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
     @app.post("/admin/orders/<int:order_id>/payment")
     @login_required
     def record_payment(order_id):
-        db = get_db(); amount = float(request.form["amount"]); stamp = now()
+        db = get_db()
+        order = db.execute("SELECT amount,paid_amount FROM orders WHERE id=?", (order_id,)).fetchone()
+        if not order:
+            abort(404)
+        try:
+            amount = float(request.form.get("amount", ""))
+        except (TypeError, ValueError):
+            amount = 0
+        if amount <= 0:
+            flash("回款金额必须大于零", "error")
+            return redirect(url_for("admin_operations"))
+        stamp = now()
         db.execute("INSERT INTO payments(order_id,amount,currency,payment_date,method,reference_no,status,notes,created_at) VALUES(?,?,?,?,?,?,?,?,?)", (order_id, amount, request.form.get("currency", "USD"), request.form.get("payment_date"), request.form.get("method"), request.form.get("reference_no"), "已确认", request.form.get("notes"), stamp))
-        order = db.execute("SELECT amount,paid_amount FROM orders WHERE id=?", (order_id,)).fetchone(); paid = (order["paid_amount"] or 0)+amount
+        paid = (order["paid_amount"] or 0) + amount
         status = "已付清" if paid >= order["amount"] else "部分付款"
         db.execute("UPDATE orders SET paid_amount=?,payment_status=?,updated_at=? WHERE id=?", (paid,status,stamp,order_id)); audit("登记回款", "order", order_id, str(amount)); db.commit(); flash("回款已登记", "success"); return redirect(url_for("admin_operations"))
 
@@ -271,28 +342,118 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
 
     @app.route("/packaging-selector", methods=["GET", "POST"])
     def packaging_selector():
-        db=get_db(); results=[]
-        if request.method=="POST": results=recommend_products(db,request.form.get("category",""),request.form.get("capacity",""),request.form.get("material",""),int(request.form.get("quantity") or 0))
-        categories=db.execute("SELECT DISTINCT category FROM products WHERE published=1 AND category!='' ORDER BY category").fetchall(); return render_template("public/selector.html",results=results,categories=categories)
+        db = get_db()
+        results = []
+        submitted = request.method == "POST"
+        form_data = {
+            "category": request.form.get("category", "").strip(),
+            "capacity": request.form.get("capacity", "").strip(),
+            "material": request.form.get("material", "").strip(),
+            "use_case": request.form.get("use_case", "").strip(),
+            "dispensing": request.form.get("dispensing", "").strip(),
+            "sustainability": request.form.get("sustainability", "").strip(),
+            "quantity": request.form.get("quantity", "10000").strip(),
+        }
+        published_count = db.execute("SELECT COUNT(*) n FROM products WHERE published=1").fetchone()["n"]
+        if submitted:
+            try:
+                quantity = max(0, int(form_data["quantity"] or 0))
+            except ValueError:
+                quantity = 0
+                flash("Please enter a valid order quantity.", "error")
+            if not published_count:
+                flash("No published products are available yet. Please request a tailored recommendation.", "info")
+            else:
+                results = recommend_products(
+                    db, form_data["category"], form_data["capacity"],
+                    form_data["material"], quantity, form_data["use_case"],
+                    form_data["dispensing"], form_data["sustainability"]
+                )
+                if not results:
+                    flash("No sufficiently strong match was found. Send your brief and our packaging team will recommend alternatives.", "info")
+        categories = db.execute(
+            "SELECT DISTINCT category FROM products WHERE published=1 AND category!='' ORDER BY category"
+        ).fetchall()
+        return render_template(
+            "public/selector.html", results=results, categories=categories,
+            submitted=submitted, has_products=bool(published_count), form_data=form_data
+        )
 
     @app.route("/cost-estimator", methods=["GET", "POST"])
     def cost_estimator():
-        db=get_db(); result=None
-        if request.method=="POST":
-            quantity=int(request.form["quantity"]); rule=db.execute("SELECT q.*,p.name FROM quote_rules q JOIN products p ON p.id=q.product_id WHERE q.product_id=?",(request.form["product_id"],)).fetchone()
-            if rule:
-                unit=rule["tier3_price"] if quantity>=rule["tier3_min"] else rule["tier2_price"] if quantity>=rule["tier2_min"] else rule["tier1_price"] if quantity>=rule["tier1_min"] else None
-                if unit is not None:
-                    low=quantity*(unit+rule["packaging_unit_cost"]); high=low+quantity*rule["decoration_unit_cost"]+rule["tooling_cost"]; result={"product":rule["name"],"low":low,"high":high,"currency":rule["currency"],"quantity":quantity}
-                else: flash("数量低于该产品起订量", "error")
-        products=db.execute("SELECT p.id,p.name FROM products p JOIN quote_rules q ON q.product_id=p.id WHERE p.published=1 AND q.active=1").fetchall(); return render_template("public/cost_estimator.html",products=products,result=result)
+        db = get_db()
+        result = None
+        submitted = request.method == "POST"
+        form_data = {
+            "product_id": request.form.get("product_id", ""),
+            "quantity": request.form.get("quantity", "10000").strip(),
+            "include_decoration": bool(request.form.get("include_decoration")),
+            "include_tooling": bool(request.form.get("include_tooling")),
+        }
+        language = (request.view_args or {}).get("language", "en")
+        products = db.execute(
+            """SELECT p.id,p.name,p.moq,COALESCE(t.name,p.name) localized_name FROM products p
+               JOIN quote_rules q ON q.product_id=p.id
+               LEFT JOIN product_translations t ON t.product_id=p.id AND t.language=? AND t.status='已批准'
+               WHERE p.published=1 AND q.active=1
+               ORDER BY localized_name""",
+            (language,)
+        ).fetchall()
+        if submitted:
+            try:
+                quantity = max(1, int(form_data["quantity"]))
+                product_id = int(form_data["product_id"])
+            except (TypeError, ValueError):
+                quantity = product_id = 0
+                flash("Select a product and enter a valid quantity.", "error")
+            rule = None
+            if product_id:
+                rule = db.execute(
+                    """SELECT q.*,p.name,COALESCE(t.name,p.name) localized_name FROM quote_rules q
+                       JOIN products p ON p.id=q.product_id
+                       LEFT JOIN product_translations t ON t.product_id=p.id AND t.language=? AND t.status='已批准'
+                       WHERE q.product_id=? AND q.active=1 AND p.published=1""",
+                    (language, product_id)
+                ).fetchone()
+            if not products:
+                flash("Cost rules have not been published yet. Submit a project brief for a manual estimate.", "info")
+            elif not rule:
+                flash("The selected product does not have an active cost rule.", "error")
+            else:
+                unit = (
+                    rule["tier3_price"] if quantity >= rule["tier3_min"] else
+                    rule["tier2_price"] if quantity >= rule["tier2_min"] else
+                    rule["tier1_price"] if quantity >= rule["tier1_min"] else None
+                )
+                if unit is None:
+                    flash(f"Minimum configured quantity: {rule['tier1_min']:,} units.", "error")
+                else:
+                    base = quantity * unit
+                    packaging = quantity * (rule["packaging_unit_cost"] or 0)
+                    decoration = quantity * (rule["decoration_unit_cost"] or 0) if form_data["include_decoration"] else 0
+                    tooling = (rule["tooling_cost"] or 0) if form_data["include_tooling"] else 0
+                    low = base + packaging + decoration + tooling
+                    high = low * 1.08
+                    result = {
+                        "product": rule["localized_name"], "low": low, "high": high,
+                        "currency": rule["currency"], "quantity": quantity,
+                        "unit_low": low / quantity, "unit_high": high / quantity,
+                        "breakdown": {
+                            "base": base, "packaging": packaging,
+                            "decoration": decoration, "tooling": tooling,
+                        },
+                    }
+        return render_template(
+            "public/cost_estimator.html", products=products, result=result,
+            submitted=submitted, has_products=bool(products), form_data=form_data
+        )
 
     @app.get("/language/<language>/products/<slug>")
     def localized_product(language,slug):
         if language not in LANGUAGES: abort(404)
-        row=get_db().execute("SELECT p.*,t.name translated_name,t.summary translated_summary,t.description translated_description,t.decoration translated_decoration,t.sustainability translated_sustainability FROM products p JOIN product_translations t ON t.product_id=p.id AND t.language=? AND t.status='已批准' WHERE p.slug=? AND p.published=1",(language,slug)).fetchone()
+        row=get_db().execute("SELECT id FROM products WHERE slug=? AND published=1",(slug,)).fetchone()
         if not row: abort(404)
-        return render_template("public/localized_product.html",product=row,language=language,language_name=LANGUAGES[language])
+        return redirect(url_for("localized_product_v4", language=language, slug=slug), code=301)
 
     @app.get("/admin/system")
     @login_required
@@ -313,4 +474,7 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
     def api_company_score(company_id):
         token=request.headers.get("Authorization","").removeprefix("Bearer ")
         if token != os.getenv("API_TOKEN","") or not token: return jsonify({"error":"unauthorized"}),401
-        score,grade=calculate_company_score(get_db(),company_id); get_db().commit(); row=get_db().execute("SELECT score_reason FROM companies WHERE id=?",(company_id,)).fetchone(); return jsonify({"company_id":company_id,"score":score,"grade":grade,"reason":row["score_reason"]})
+        db = get_db()
+        if not db.execute("SELECT id FROM companies WHERE id=?", (company_id,)).fetchone():
+            return jsonify({"error": "company not found"}), 404
+        score,grade=calculate_company_score(db,company_id); db.commit(); row=db.execute("SELECT score_reason FROM companies WHERE id=?",(company_id,)).fetchone(); return jsonify({"company_id":company_id,"score":score,"grade":grade,"reason":row["score_reason"]})
