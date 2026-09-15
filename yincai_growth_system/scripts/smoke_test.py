@@ -477,12 +477,13 @@ with app.app_context():
 def post_video(action, name):
     return client.post("/admin/content", data={
         "csrf_token": csrf, "language": "en", "page": "home", "action": action,
-        "video": (io.BytesIO(b"\\x00\\x00\\x00\\x18ftypisom" + b"0" * 20), name),
+        "video": (io.BytesIO(bytes([0, 0, 0, 24]) + b"ftypisom" + b"0" * 20), name),
     }, content_type="multipart/form-data")
 
 assert post_video("publish", "first.mp4").status_code == 302
 with app.app_context():
     original_media = get_db().execute("SELECT value FROM settings WHERE key='site_video_file'").fetchone()["value"]
+assert original_media.endswith(".mp4"), original_media
 assert post_video("draft", "replacement.mp4").status_code == 302
 assert client.get("/uploads/" + original_media).status_code == 200
 with app.app_context():
