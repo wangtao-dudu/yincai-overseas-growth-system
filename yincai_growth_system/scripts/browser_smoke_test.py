@@ -81,10 +81,14 @@ try:
         page.locator('form button').click()
         page.wait_for_url("**/admin")
         assert page.locator(".sidebar").is_visible()
-        page.goto(base_url + "/admin/content")
-        assert page.locator('button[value="draft"]').is_visible()
-        assert page.locator('button[value="publish"]').is_visible()
-        assert page.locator('a[href*="/admin/content/preview/"]').is_visible()
+        cms_response = page.goto(base_url + "/admin/content", wait_until="networkidle")
+        assert cms_response.status == 200, (cms_response.status, page.url)
+        draft_button = page.locator('button[name="action"][value="draft"]')
+        publish_button = page.locator('button[name="action"][value="publish"]')
+        preview_link = page.locator('a[href*="/admin/content/preview/"]')
+        assert draft_button.count() == publish_button.count() == preview_link.count() == 1
+        draft_button.scroll_into_view_if_needed()
+        assert draft_button.is_visible() and publish_button.is_visible() and preview_link.is_visible()
         context.close()
 
         consent_context = browser.new_context()
