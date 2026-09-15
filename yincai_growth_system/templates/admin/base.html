@@ -14,7 +14,7 @@
     {% if can_access('opportunities') %}<a class="{{ 'active' if request.endpoint in ['admin_opportunities','update_stage'] }}" href="{{ url_for('admin_opportunities') }}">商机漏斗</a>{% endif %}
     {% if can_access('operations') %}<a class="{{ 'active' if request.endpoint in ['admin_operations','auto_quote'] }}" href="{{ url_for('admin_operations') }}">样品·报价·订单</a>{% endif %}
     {% if can_access('content') or can_access('catalog') or can_access('translations') or can_access('quality') or can_access('distributors') %}<span class="nav-label">内容与供应</span>{% endif %}
-    {% if can_access('content') %}<a class="{{ 'active' if request.endpoint in ['content_admin','content_preview'] }}" href="{{ url_for('content_admin') }}">网站内容与视频</a>{% endif %}
+    {% if can_access('content') %}<a class="{{ 'active' if request.endpoint in ['content_admin','content_preview'] }}" href="{{ url_for('content_admin') }}">网站页面工作台</a>{% endif %}
     {% if can_access('catalog') %}<a class="{{ 'active' if request.endpoint in ['admin_products','edit_product'] }}" href="{{ url_for('admin_products') }}">产品与素材</a><a class="{{ 'active' if request.endpoint=='catalog_rules' }}" href="{{ url_for('catalog_rules') }}">报价与环保数据</a>{% endif %}
     {% if can_access('translations') %}<a class="{{ 'active' if request.endpoint=='translations' }}" href="{{ url_for('translations') }}">多语言审核</a>{% endif %}
     {% if can_access('quality') %}<a class="{{ 'active' if request.endpoint=='quality' }}" href="{{ url_for('quality') }}">客诉与质量</a>{% endif %}

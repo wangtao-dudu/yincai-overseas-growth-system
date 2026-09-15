@@ -430,3 +430,37 @@ assert logout_client.get("/admin").status_code == 302
 assert client.get(f"/admin/products/{product_id}/edit").status_code == 200
 assert client.get(f"/admin/companies/{company_id}").status_code == 200
 print("V4.2 extended interaction tests passed")
+
+
+# V4.2 structured page CMS: every customer-facing section is editable, previewable and publishable.
+cms_cases = {
+    "solutions": ("solutions_title", "CMS Solutions Proof", "/en/", b"CMS Solutions Proof"),
+    "capabilities": ("capabilities_title", "CMS Capability Proof", "/en/", b"CMS Capability Proof"),
+    "products": ("products_title", "CMS Product Centre Proof", "/en/products", b"CMS Product Centre Proof"),
+    "selector": ("selector_title", "CMS Selector Proof", "/en/packaging-selector", b"CMS Selector Proof"),
+    "cost": ("cost_title", "CMS Cost Proof", "/en/cost-estimator", b"CMS Cost Proof"),
+}
+for cms_page, (field, value, public_path, expected_text) in cms_cases.items():
+    editor = content_client.get(f"/admin/content?language=en&page={cms_page}")
+    assert editor.status_code == 200 and value.replace("Proof", "").encode() not in editor.data
+    response = content_client.post(
+        "/admin/content",
+        data={"csrf_token": content_csrf, "language": "en", "page": cms_page, "action": "draft", field: value},
+        follow_redirects=False,
+    )
+    assert response.status_code == 302
+    preview = content_client.get(f"/admin/content/preview/en/{cms_page}")
+    assert preview.status_code == 200 and expected_text in preview.data
+    assert expected_text not in client.get(public_path).data
+    response = content_client.post(
+        "/admin/content",
+        data={"csrf_token": content_csrf, "language": "en", "page": cms_page, "action": "publish", field: value},
+        follow_redirects=False,
+    )
+    assert response.status_code == 302 and expected_text in client.get(public_path).data
+
+workspace = content_client.get("/admin/content?language=en&page=products").data
+for label in ("首页首屏", "解决方案", "能力与流程", "产品中心", "包装选择器", "成本估算"):
+    assert label.encode() in workspace
+assert b"/admin/products" in workspace and b"/admin/translations" in workspace
+print("V4.2 structured page CMS tests passed")

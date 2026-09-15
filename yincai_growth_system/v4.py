@@ -57,6 +57,49 @@ CONTENT_DEFAULTS = {
         "video_body": "Use a factory, process or hero-product film to turn manufacturing capability into visible proof.",
         "cta_title": "Bring us the brief. Leave with a production route.",
         "cta_body": "Tell us the formula, format, quantity and launch date. We will respond with practical next steps.",
+        "solutions_kicker": "BUILT AROUND YOUR BUSINESS",
+        "solutions_title": "A packaging partner built for the launch, not just the purchase order.",
+        "solutions_body": "Choose the cooperation route that matches your commercial model and launch stage.",
+        "solution_1_label": "01 / BRAND", "solution_1_title": "Beauty brands",
+        "solution_1_body": "Distinctive packaging, flexible development and support from first sample to repeat production.",
+        "solution_2_label": "02 / OEM·ODM", "solution_2_title": "Manufacturers",
+        "solution_2_body": "Fast quotation, multi-product sourcing and dependable coordination across customer programs.",
+        "solution_3_label": "03 / CHANNEL", "solution_3_title": "Distributors",
+        "solution_3_body": "Structured product data, regional cooperation and scalable supply for local demand.",
+        "capabilities_kicker": "FROM BRIEF TO SCALE",
+        "capabilities_title": "A transparent route from idea to repeat production.",
+        "capabilities_body": "Each stage leaves a clear decision, owner and verification record.",
+        "capability_1_title": "Discover", "capability_1_body": "Formula, market, target cost and launch timing.",
+        "capability_2_title": "Engineer", "capability_2_body": "Structure, material, decoration and compatibility.",
+        "capability_3_title": "Validate", "capability_3_body": "Samples, appearance, leakage and quality records.",
+        "capability_4_title": "Deliver", "capability_4_body": "Production milestones, inspection and global shipping.",
+        "products_kicker": "PRODUCT DATABASE",
+        "products_title": "Packaging selected for real projects.",
+        "products_intro": "Specifications, customization routes and production information for faster project decisions.",
+        "products_featured_kicker": "SELECTED PRODUCTS",
+        "products_featured_title": "Proven formats, ready for your identity.",
+        "products_empty_title": "Product data is being prepared.",
+        "products_empty_body": "Send a project brief for a tailored recommendation.",
+        "selector_kicker": "SMART MATCH / 01",
+        "selector_title": "Packaging selector",
+        "selector_intro": "Match product type, usage, dispensing, material, capacity, sustainability and order quantity.",
+        "selector_empty_kicker": "YC / MATCH ENGINE",
+        "selector_empty_title": "Explainable recommendations appear here.",
+        "selector_empty_body": "Final compatibility and specifications are confirmed during sampling.",
+        "selector_no_match_kicker": "NO STRONG MATCH",
+        "selector_no_match_title": "We will build a shortlist manually.",
+        "selector_manual_title": "Catalog data is still being prepared.",
+        "cost_kicker": "BUDGET BUILDER / 02",
+        "cost_title": "Cost estimate",
+        "cost_intro": "Build an early planning range from approved public pricing rules.",
+        "cost_empty_kicker": "YC / COST ENGINE",
+        "cost_empty_title": "Your budget range will appear here immediately.",
+        "cost_empty_body": "Only products with approved public cost rules can be calculated.",
+        "cost_note": "Planning estimate only. Freight, tax and testing are confirmed separately.",
+        "cost_no_rules_title": "No public cost rule is available.",
+        "cost_no_rules_body": "Send quantity, finish and reference artwork for a manual estimate.",
+        "cost_result_kicker": "ESTIMATED PROJECT RANGE",
+        "cost_estimate_cta": "Turn estimate into exact quote",
     },
     "zh": {
         "hero_kicker": "为产品上市而设计的化妆品包装",
@@ -69,6 +112,25 @@ CONTENT_DEFAULTS = {
         "video_body": "通过工厂、工艺或主推产品视频，把制造能力变成客户看得见的证据。",
         "cta_title": "提交需求，获得一条可执行的量产路径。",
         "cta_body": "告诉我们配方、包装形式、数量和上市时间，团队将给出明确的下一步。",
+        "solutions_body": "根据客户商业模式与产品阶段选择合适的合作路径。",
+        "solution_1_label": "01 / 品牌", "solution_2_label": "02 / OEM·ODM", "solution_3_label": "03 / 渠道",
+        "capabilities_body": "每个阶段都有明确决策、负责人和验证记录。",
+        "products_empty_body": "提交项目需求，我们将提供针对性产品建议。",
+        "selector_empty_kicker": "银彩 / 智能匹配",
+        "selector_empty_title": "可解释的产品建议将在这里显示。",
+        "selector_empty_body": "最终相容性与规格将在打样阶段确认。",
+        "selector_no_match_kicker": "暂无高匹配结果",
+        "selector_no_match_title": "我们将人工建立候选清单。",
+        "selector_manual_title": "产品目录数据正在准备中。",
+        "cost_kicker": "预算测算 / 02",
+        "cost_empty_kicker": "银彩 / 成本引擎",
+        "cost_empty_title": "预算区间将在这里即时显示。",
+        "cost_empty_body": "只有已批准公开报价规则的产品可以计算。",
+        "cost_note": "仅供前期规划；运费、税费与测试费用需另行确认。",
+        "cost_no_rules_title": "目前没有可公开计算的成本规则。",
+        "cost_no_rules_body": "请提交数量、工艺和参考图，我们将人工估算。",
+        "cost_result_kicker": "项目成本估算区间",
+        "cost_estimate_cta": "转为精确报价",
     },
 }
 
@@ -77,7 +139,172 @@ CONTENT_FIELDS = (
     "metric_1_value", "metric_1_label", "metric_2_value", "metric_2_label",
     "metric_3_value", "metric_3_label", "video_title", "video_body",
     "cta_title", "cta_body",
+    "solutions_kicker", "solutions_title", "solutions_body",
+    "solution_1_label", "solution_1_title", "solution_1_body",
+    "solution_2_label", "solution_2_title", "solution_2_body",
+    "solution_3_label", "solution_3_title", "solution_3_body",
+    "capabilities_kicker", "capabilities_title", "capabilities_body",
+    "capability_1_title", "capability_1_body", "capability_2_title", "capability_2_body",
+    "capability_3_title", "capability_3_body", "capability_4_title", "capability_4_body",
+    "products_kicker", "products_title", "products_intro",
+    "products_featured_kicker", "products_featured_title", "products_empty_title", "products_empty_body",
+    "selector_kicker", "selector_title", "selector_intro",
+    "selector_empty_kicker", "selector_empty_title", "selector_empty_body",
+    "selector_no_match_kicker", "selector_no_match_title", "selector_manual_title",
+    "cost_kicker", "cost_title", "cost_intro", "cost_empty_kicker", "cost_empty_title",
+    "cost_empty_body", "cost_note", "cost_no_rules_title", "cost_no_rules_body",
+    "cost_result_kicker", "cost_estimate_cta",
 )
+
+CONTENT_TRANSLATION_MAP = {
+    "solutions_kicker": "solutions_kicker", "solutions_title": "solutions_title",
+    "solution_1_title": "brand_title", "solution_1_body": "brand_body",
+    "solution_2_title": "manufacturer_title", "solution_2_body": "manufacturer_body",
+    "solution_3_title": "distributor_title", "solution_3_body": "distributor_body",
+    "capabilities_kicker": "process_kicker", "capabilities_title": "process_title",
+    "capability_1_title": "step_1", "capability_1_body": "step_1_body",
+    "capability_2_title": "step_2", "capability_2_body": "step_2_body",
+    "capability_3_title": "step_3", "capability_3_body": "step_3_body",
+    "capability_4_title": "step_4", "capability_4_body": "step_4_body",
+    "products_kicker": "product_database", "products_title": "products_title",
+    "products_intro": "products_intro", "products_featured_kicker": "selected",
+    "products_featured_title": "selected_title", "products_empty_title": "no_products",
+    "selector_title": "nav_selector", "selector_intro": "selector_intro",
+    "cost_title": "nav_cost", "cost_intro": "cost_intro",
+}
+
+CONTENT_PAGES = {
+    "home": {
+        "label": "首页首屏", "number": "01", "path": "/en/",
+        "description": "品牌定位、可信度数据、视频与最终询价行动。",
+        "links": (),
+        "groups": (
+            ("首屏价值", "客户进入网站三秒内必须看懂的核心价值。", (
+                ("hero_kicker", "顶部小标题", "text"), ("hero_title", "核心标题", "textarea"),
+                ("hero_body", "价值说明", "textarea"),
+            )),
+            ("可信度数据", "只填写可以被销售与质量团队核验的数据。", (
+                ("metric_1_value", "数据 1", "text"), ("metric_1_label", "数据 1 说明", "text"),
+                ("metric_2_value", "数据 2", "text"), ("metric_2_label", "数据 2 说明", "text"),
+                ("metric_3_value", "数据 3", "text"), ("metric_3_label", "数据 3 说明", "text"),
+            )),
+            ("视频证据", "标题和说明在此编辑；文件或链接在下方上传。", (
+                ("video_title", "视频区标题", "textarea"), ("video_body", "视频区说明", "textarea"),
+            )),
+            ("询价转化", "页面底部推动客户提交项目需求。", (
+                ("cta_title", "行动标题", "textarea"), ("cta_body", "行动说明", "textarea"),
+            )),
+        ),
+    },
+    "solutions": {
+        "label": "解决方案", "number": "02", "path": "/en/#solutions",
+        "description": "按美妆品牌、制造企业和渠道商组织合作价值。",
+        "links": (),
+        "groups": (
+            ("板块标题", "说明银彩针对不同客户类型提供什么价值。", (
+                ("solutions_kicker", "顶部小标题", "text"), ("solutions_title", "核心标题", "textarea"),
+                ("solutions_body", "板块说明", "textarea"),
+            )),
+            ("客户方案 1", "面向美妆品牌。", (
+                ("solution_1_label", "分类标签", "text"), ("solution_1_title", "方案标题", "text"),
+                ("solution_1_body", "方案说明", "textarea"),
+            )),
+            ("客户方案 2", "面向 OEM / ODM 制造企业。", (
+                ("solution_2_label", "分类标签", "text"), ("solution_2_title", "方案标题", "text"),
+                ("solution_2_body", "方案说明", "textarea"),
+            )),
+            ("客户方案 3", "面向区域经销商与渠道伙伴。", (
+                ("solution_3_label", "分类标签", "text"), ("solution_3_title", "方案标题", "text"),
+                ("solution_3_body", "方案说明", "textarea"),
+            )),
+        ),
+    },
+    "capabilities": {
+        "label": "能力与流程", "number": "03", "path": "/en/#process",
+        "description": "把需求、工程、验证和交付能力变成可见证据。",
+        "links": (),
+        "groups": (
+            ("板块标题", "用客户能理解的语言解释制造能力。", (
+                ("capabilities_kicker", "顶部小标题", "text"), ("capabilities_title", "核心标题", "textarea"),
+                ("capabilities_body", "板块说明", "textarea"),
+            )),
+            ("01 需求诊断", "明确配方、市场、成本和时间。", (
+                ("capability_1_title", "步骤标题", "text"), ("capability_1_body", "步骤说明", "textarea"),
+            )),
+            ("02 工程开发", "明确结构、材料和工艺。", (
+                ("capability_2_title", "步骤标题", "text"), ("capability_2_body", "步骤说明", "textarea"),
+            )),
+            ("03 验证测试", "明确打样、相容性与质量记录。", (
+                ("capability_3_title", "步骤标题", "text"), ("capability_3_body", "步骤说明", "textarea"),
+            )),
+            ("04 量产交付", "明确生产、检验和运输。", (
+                ("capability_4_title", "步骤标题", "text"), ("capability_4_body", "步骤说明", "textarea"),
+            )),
+        ),
+    },
+    "products": {
+        "label": "产品中心", "number": "04", "path": "/en/products",
+        "description": "编辑产品页定位；具体产品、图片和多语言在关联入口维护。",
+        "links": (("产品与素材", "admin_products"), ("多语言审核", "translations")),
+        "groups": (
+            ("产品页标题", "帮助采购快速理解产品数据库的用途。", (
+                ("products_kicker", "顶部小标题", "text"), ("products_title", "核心标题", "textarea"),
+                ("products_intro", "页面说明", "textarea"),
+            )),
+            ("首页精选产品", "控制首页产品区的标题。", (
+                ("products_featured_kicker", "顶部小标题", "text"),
+                ("products_featured_title", "核心标题", "textarea"),
+            )),
+            ("无产品状态", "目录尚未发布产品时给客户明确下一步。", (
+                ("products_empty_title", "空状态标题", "text"),
+                ("products_empty_body", "空状态说明", "textarea"),
+            )),
+        ),
+    },
+    "selector": {
+        "label": "包装选择器", "number": "05", "path": "/en/packaging-selector",
+        "description": "编辑工具说明与结果状态；匹配依据来自产品和选型规则。",
+        "links": (("产品与素材", "admin_products"), ("选型与报价规则", "catalog_rules")),
+        "groups": (
+            ("工具首屏", "告诉客户需要输入什么，以及会得到什么。", (
+                ("selector_kicker", "顶部小标题", "text"), ("selector_title", "工具标题", "text"),
+                ("selector_intro", "工具说明", "textarea"),
+            )),
+            ("等待结果", "客户尚未提交条件时的提示。", (
+                ("selector_empty_kicker", "状态标签", "text"), ("selector_empty_title", "状态标题", "text"),
+                ("selector_empty_body", "状态说明", "textarea"),
+            )),
+            ("无匹配结果", "没有达到推荐阈值时引导人工选型。", (
+                ("selector_no_match_kicker", "状态标签", "text"),
+                ("selector_no_match_title", "状态标题", "text"),
+                ("selector_manual_title", "目录未就绪提示", "text"),
+            )),
+        ),
+    },
+    "cost": {
+        "label": "成本估算", "number": "06", "path": "/en/cost-estimator",
+        "description": "编辑预算工具说明、免责声明和询价转化文案。",
+        "links": (("报价与环保数据", "catalog_rules"), ("自动报价", "auto_quote")),
+        "groups": (
+            ("工具首屏", "说明估算范围和数据来源。", (
+                ("cost_kicker", "顶部小标题", "text"), ("cost_title", "工具标题", "text"),
+                ("cost_intro", "工具说明", "textarea"),
+            )),
+            ("等待结果", "客户尚未计算时显示。", (
+                ("cost_empty_kicker", "状态标签", "text"), ("cost_empty_title", "状态标题", "text"),
+                ("cost_empty_body", "状态说明", "textarea"),
+            )),
+            ("规则与结果", "无规则提示、估算免责声明和下一步行动。", (
+                ("cost_note", "估算免责声明", "textarea"), ("cost_no_rules_title", "无规则标题", "text"),
+                ("cost_no_rules_body", "无规则说明", "textarea"),
+                ("cost_result_kicker", "结果标签", "text"), ("cost_estimate_cta", "询价按钮文案", "text"),
+            )),
+        ),
+    },
+}
+
+def page_field_names(page):
+    return tuple(field[0] for group in CONTENT_PAGES[page]["groups"] for field in group[2])
 
 
 
@@ -202,7 +429,12 @@ def register_v4(app, get_db, login_required, now, audit, upload_folder):
         return {row["key"]: row["value"] for row in db.execute("SELECT key,value FROM settings WHERE key LIKE 'site_%' OR key LIKE 'draft_site_%'")}
 
     def default_content(language):
-        return {**CONTENT_DEFAULTS["en"], **CONTENT_DEFAULTS.get(language, {})}
+        defaults = {**CONTENT_DEFAULTS["en"], **CONTENT_DEFAULTS.get(language, {})}
+        labels = TRANSLATIONS.get(language, TRANSLATIONS["en"])
+        for field, translation_key in CONTENT_TRANSLATION_MAP.items():
+            if labels.get(translation_key):
+                defaults[field] = labels[translation_key]
+        return defaults
 
     def load_content(db, language, draft=False):
         values = settings_map(db)
@@ -332,68 +564,128 @@ def register_v4(app, get_db, login_required, now, audit, upload_folder):
             abort(403, "当前岗位没有网站内容管理权限")
         db = get_db()
         language = request.form.get("language") or request.args.get("language") or "en"
+        selected_page = request.form.get("page") or request.args.get("page") or "home"
         if language not in LANGUAGE_LABELS:
             language = "en"
+        if selected_page not in CONTENT_PAGES:
+            selected_page = "home"
+        fields = page_field_names(selected_page)
         if request.method == "POST":
             action = request.form.get("action", "draft")
+            if action not in {"draft", "publish"}:
+                abort(400)
             prefix = "site" if action == "publish" else "draft_site"
-            for field in CONTENT_FIELDS:
+            for field in fields:
                 set_setting(db, f"{prefix}_{language}_{field}", request.form.get(field, "").strip())
-            try:
-                video_url = normalize_video_url(request.form.get("video_url"))
-                video = request.files.get("video")
-                if video and video.filename:
-                    extension = validate_video(video)
-                    old = load_content(db, language, draft=True).get("video_file")
-                    filename = f"home-{secrets.token_hex(8)}.{extension}"
-                    video.save(Path(upload_folder) / filename)
-                    set_setting(db, "draft_site_video_file", filename)
-                    if action == "publish":
-                        set_setting(db, "site_video_file", filename)
-                    if old and old != filename:
+            if selected_page == "home":
+                try:
+                    video_url = normalize_video_url(request.form.get("video_url"))
+                    video = request.files.get("video")
+                    if video and video.filename:
+                        extension = validate_video(video)
+                        old = load_content(db, language, draft=True).get("video_file")
+                        filename = f"home-{secrets.token_hex(8)}.{extension}"
+                        video.save(Path(upload_folder) / filename)
+                        set_setting(db, "draft_site_video_file", filename)
+                        if action == "publish":
+                            set_setting(db, "site_video_file", filename)
+                        if old and old != filename:
+                            remove_upload(old)
+                    if request.form.get("remove_video"):
+                        old = load_content(db, language, draft=True).get("video_file")
+                        set_setting(db, "draft_site_video_file", "")
+                        if action == "publish":
+                            set_setting(db, "site_video_file", "")
                         remove_upload(old)
-                if request.form.get("remove_video"):
-                    old = load_content(db, language, draft=True).get("video_file")
-                    set_setting(db, "draft_site_video_file", "")
+                    set_setting(db, "draft_site_video_url", video_url)
                     if action == "publish":
-                        set_setting(db, "site_video_file", "")
-                    remove_upload(old)
-                set_setting(db, "draft_site_video_url", video_url)
-                if action == "publish":
-                    current_draft_video = load_content(db, language, draft=True).get("video_file", "")
-                    set_setting(db, "site_video_file", current_draft_video)
-                    set_setting(db, "site_video_url", video_url)
-            except ValueError as exc:
-                db.rollback()
-                flash(str(exc), "error")
-                return redirect(url_for("content_admin", language=language))
+                        current_draft_video = load_content(db, language, draft=True).get("video_file", "")
+                        set_setting(db, "site_video_file", current_draft_video)
+                        set_setting(db, "site_video_url", video_url)
+                except ValueError as exc:
+                    db.rollback()
+                    flash(str(exc), "error")
+                    params = {"language": language}
+                    if selected_page != "home":
+                        params["page"] = selected_page
+                    return redirect(url_for("content_admin", **params))
             if action == "publish":
-                for field in CONTENT_FIELDS:
-                    set_setting(db, f"site_{language}_{field}", request.form.get(field, "").strip())
-                    set_setting(db, f"draft_site_{language}_{field}", request.form.get(field, "").strip())
+                for field in fields:
+                    value = request.form.get(field, "").strip()
+                    set_setting(db, f"site_{language}_{field}", value)
+                    set_setting(db, f"draft_site_{language}_{field}", value)
                 snapshot = load_content(db, language, draft=True)
                 db.execute(
                     "INSERT INTO content_versions(language,payload,created_by,created_at) VALUES(?,?,?,?)",
                     (language, json.dumps(snapshot, ensure_ascii=False), session.get("username"), now())
                 )
-                audit("发布海外网站内容", "settings", detail=f"语言：{LANGUAGE_LABELS[language]}")
-                message = "内容已发布到正式网站"
+                audit("发布海外网站内容", "settings", detail=f"页面：{CONTENT_PAGES[selected_page]['label']}；语言：{LANGUAGE_LABELS[language]}")
+                message = f"{CONTENT_PAGES[selected_page]['label']}已发布到正式网站"
             else:
-                audit("保存网站内容草稿", "settings", detail=f"语言：{LANGUAGE_LABELS[language]}")
-                message = "草稿已保存，可先预览再发布"
+                audit("保存网站内容草稿", "settings", detail=f"页面：{CONTENT_PAGES[selected_page]['label']}；语言：{LANGUAGE_LABELS[language]}")
+                message = f"{CONTENT_PAGES[selected_page]['label']}草稿已保存，可先预览再发布"
             db.commit()
             flash(message, "success")
-            return redirect(url_for("content_admin", language=language))
+            params = {"language": language}
+            if selected_page != "home":
+                params["page"] = selected_page
+            return redirect(url_for("content_admin", **params))
+        draft_content = load_content(db, language, draft=True)
+        live_content = load_content(db, language)
+        page_status = {}
+        for page_key in CONTENT_PAGES:
+            page_fields = page_field_names(page_key)
+            page_status[page_key] = {
+                "filled": sum(bool(draft_content.get(field)) for field in page_fields),
+                "total": len(page_fields),
+                "changed": any(draft_content.get(field) != live_content.get(field) for field in page_fields),
+            }
         versions = db.execute("SELECT * FROM content_versions WHERE language=? ORDER BY id DESC LIMIT 8", (language,)).fetchall()
-        return render_template("admin/content.html", languages=LANGUAGE_LABELS, selected_language=language, content=load_content(db, language, draft=True), versions=versions)
+        return render_template(
+            "admin/content.html", languages=LANGUAGE_LABELS, selected_language=language,
+            selected_page=selected_page, pages=CONTENT_PAGES, page=CONTENT_PAGES[selected_page],
+            content=draft_content, page_status=page_status, versions=versions
+        )
 
     @app.get("/admin/content/preview/<language>")
+    @app.get("/admin/content/preview/<language>/<page>")
     @login_required
-    def content_preview(language):
+    def content_preview(language, page="home"):
         if session.get("role") not in {"管理员", "海外负责人", "内容运营"} or language not in LANGUAGE_LABELS:
             abort(403)
-        products = get_db().execute("SELECT * FROM products WHERE published=1 ORDER BY featured DESC,id DESC LIMIT 8").fetchall()
-        return render_template("public/home.html", products=products, site=load_content(get_db(), language, draft=True), current_language=language, preview_mode=True)
+        if page not in CONTENT_PAGES:
+            abort(404)
+        db = get_db()
+        draft = load_content(db, language, draft=True)
+        if page in {"home", "solutions", "capabilities"}:
+            products = localized_product_rows(db, language, limit=8)
+            return render_template("public/home.html", products=products, site=draft, current_language=language, preview_mode=True)
+        if page == "products":
+            categories = db.execute("SELECT DISTINCT category FROM products WHERE published=1 AND category!='' ORDER BY category").fetchall()
+            return render_template(
+                "public/products.html", products=localized_product_rows(db, language),
+                categories=categories, active_category="", site=draft,
+                current_language=language, preview_mode=True
+            )
+        if page == "selector":
+            categories = db.execute("SELECT DISTINCT category FROM products WHERE published=1 AND category!='' ORDER BY category").fetchall()
+            count = db.execute("SELECT COUNT(*) n FROM products WHERE published=1").fetchone()["n"]
+            form_data = {"category":"","capacity":"","material":"","use_case":"","dispensing":"","sustainability":"","quantity":"10000"}
+            return render_template(
+                "public/selector.html", results=[], categories=categories, submitted=False,
+                has_products=bool(count), form_data=form_data, site=draft,
+                current_language=language, preview_mode=True
+            )
+        products = db.execute(
+            """SELECT p.id,p.name,p.moq,p.name localized_name FROM products p
+               JOIN quote_rules q ON q.product_id=p.id
+               WHERE p.published=1 AND q.active=1 ORDER BY p.name"""
+        ).fetchall()
+        return render_template(
+            "public/cost_estimator.html", products=products, result=None, submitted=False,
+            has_products=bool(products), form_data={"product_id":"","quantity":"10000","include_decoration":False,"include_tooling":False},
+            site=draft, current_language=language, preview_mode=True
+        )
 
     @app.post("/admin/content/restore/<int:version_id>")
     @login_required
@@ -406,9 +698,12 @@ def register_v4(app, get_db, login_required, now, audit, upload_folder):
             abort(404)
         payload = json.loads(version["payload"])
         for field in CONTENT_FIELDS:
-            set_setting(db, f"draft_site_{version['language']}_{field}", payload.get(field, ""))
-        set_setting(db, "draft_site_video_file", payload.get("video_file", ""))
-        set_setting(db, "draft_site_video_url", payload.get("video_url", ""))
+            if field in payload:
+                set_setting(db, f"draft_site_{version['language']}_{field}", payload[field])
+        if "video_file" in payload:
+            set_setting(db, "draft_site_video_file", payload["video_file"])
+        if "video_url" in payload:
+            set_setting(db, "draft_site_video_url", payload["video_url"])
         audit("恢复网站内容版本", "content_version", version_id)
         db.commit()
         flash("历史版本已恢复为草稿，请预览后发布", "success")

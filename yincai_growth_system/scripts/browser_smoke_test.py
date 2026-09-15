@@ -101,6 +101,21 @@ try:
         page.locator('button[name="action"][value="publish"]').click()
         page.wait_for_url("**/admin/content?language=en")
         assert page.locator(".public-flash.success, .flash.success").is_visible()
+
+        # The page map keeps every public section discoverable and edits one section at a time.
+        assert page.locator(".cms-pages nav a").count() == 6
+        page.goto(base_url + "/admin/content?language=en&page=selector", wait_until="networkidle")
+        assert page.locator('input[name="selector_title"]').is_visible()
+        assert page.locator('input[name="hero_kicker"]').count() == 0
+        page.fill('input[name="selector_title"]', "Browser-managed selector")
+        page.locator('button[name="action"][value="draft"]').click()
+        page.wait_for_url("**page=selector")
+        with context.expect_page() as selector_preview_info:
+            page.locator('.sticky-save a[href*="/admin/content/preview/"]').click()
+        selector_preview = selector_preview_info.value
+        selector_preview.wait_for_load_state("networkidle")
+        assert selector_preview.locator("h1").inner_text() == "Browser-managed selector"
+        selector_preview.close()
         context.close()
 
         consent_context = browser.new_context()

@@ -27,11 +27,9 @@
 
 <section class="section solutions" id="solutions">
   <div class="section-number">01</div>
-  <div class="section-head"><div><span class="eyebrow">{{ t.solutions_kicker }}</span><h2>{{ t.solutions_title }}</h2></div><p>{{ site.hero_body }}</p></div>
+  <div class="section-head"><div><span class="eyebrow">{{ site.solutions_kicker }}</span><h2>{{ site.solutions_title }}</h2></div><p>{{ site.solutions_body }}</p></div>
   <div class="solution-grid">
-    <article><span>01 / BRAND</span><h3>{{ t.brand_title }}</h3><p>{{ t.brand_body }}</p><i>↗</i></article>
-    <article><span>02 / OEM·ODM</span><h3>{{ t.manufacturer_title }}</h3><p>{{ t.manufacturer_body }}</p><i>↗</i></article>
-    <article><span>03 / CHANNEL</span><h3>{{ t.distributor_title }}</h3><p>{{ t.distributor_body }}</p><i>↗</i></article>
+    {% for n in range(1,4) %}<article><span>{{ site['solution_' ~ n ~ '_label'] }}</span><h3>{{ site['solution_' ~ n ~ '_title'] }}</h3><p>{{ site['solution_' ~ n ~ '_body'] }}</p><i>↗</i></article>{% endfor %}
   </div>
 </section>
 
@@ -50,18 +48,15 @@
 
 <section class="section process" id="process">
   <div class="section-number">02</div>
-  <div class="section-head"><div><span class="eyebrow">{{ t.process_kicker }}</span><h2>{{ t.process_title }}</h2></div></div>
+  <div class="section-head"><div><span class="eyebrow">{{ site.capabilities_kicker }}</span><h2>{{ site.capabilities_title }}</h2></div><p>{{ site.capabilities_body }}</p></div>
   <div class="process-grid">
-    <article><b>01</b><div><h3>{{ t.step_1 }}</h3><p>{{ t.step_1_body }}</p></div></article>
-    <article><b>02</b><div><h3>{{ t.step_2 }}</h3><p>{{ t.step_2_body }}</p></div></article>
-    <article><b>03</b><div><h3>{{ t.step_3 }}</h3><p>{{ t.step_3_body }}</p></div></article>
-    <article><b>04</b><div><h3>{{ t.step_4 }}</h3><p>{{ t.step_4_body }}</p></div></article>
+    {% for n in range(1,5) %}<article><b>0{{ n }}</b><div><h3>{{ site['capability_' ~ n ~ '_title'] }}</h3><p>{{ site['capability_' ~ n ~ '_body'] }}</p></div></article>{% endfor %}
   </div>
 </section>
 
 <section class="section products-section">
   <div class="section-number">03</div>
-  <div class="section-head"><div><span class="eyebrow">{{ t.selected }}</span><h2>{{ t.selected_title }}</h2></div><a class="text-link" href="{{ lurl('public_products') }}">{{ t.view_all }} ↗</a></div>
+  <div class="section-head"><div><span class="eyebrow">{{ site.products_featured_kicker }}</span><h2>{{ site.products_featured_title }}</h2></div><a class="text-link" href="{{ lurl('public_products') }}">{{ t.view_all }} ↗</a></div>
   {% if products %}
   <div class="product-grid">
     {% for product in products %}
@@ -72,7 +67,7 @@
     {% endfor %}
   </div>
   {% else %}
-  <div class="empty-public"><span>PRODUCT LIBRARY</span><h3>{{ t.no_products }}</h3><p>{{ site.cta_body }}</p><a class="button primary" href="{{ lurl('request_quote') }}">{{ t.start_project }}</a></div>
+  <div class="empty-public"><span>PRODUCT LIBRARY</span><h3>{{ site.products_empty_title }}</h3><p>{{ site.products_empty_body }}</p><a class="button primary" href="{{ lurl('request_quote') }}">{{ t.start_project }}</a></div>
   {% endif %}
 </section>
 
