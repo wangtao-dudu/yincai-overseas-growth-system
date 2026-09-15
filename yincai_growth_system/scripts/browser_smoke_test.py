@@ -85,16 +85,17 @@ try:
         assert cms_response.status == 200, (cms_response.status, page.url)
         draft_button = page.locator('button[name="action"][value="draft"]')
         publish_button = page.locator('button[name="action"][value="publish"]')
-        preview_link = page.locator('a[href*="/admin/content/preview/"]')
+        preview_links = page.locator('a[href*="/admin/content/preview/"]')
+        preview_link = preview_links.first
         assert draft_button.count() == publish_button.count() == 1
-        assert preview_link.count() >= 1
+        assert preview_links.count() >= 1
         draft_button.scroll_into_view_if_needed()
         assert draft_button.is_visible() and publish_button.is_visible() and preview_link.is_visible()
         draft_button.click()
         page.wait_for_url("**/admin/content?language=en")
         assert page.locator(".public-flash.success, .flash.success").is_visible()
         with context.expect_page() as preview_info:
-            page.locator('a[href*="/admin/content/preview/"]').click()
+            preview_link.click()
         preview_page = preview_info.value
         preview_page.wait_for_load_state("networkidle")
         assert preview_page.locator(".preview-banner").is_visible()
