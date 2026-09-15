@@ -73,7 +73,7 @@ try:
         page.locator('button[type="submit"]').click()
         page.wait_for_load_state("networkidle")
         assert page.locator(".thanks").is_visible()
-        assert page.locator(".request-reference").inner_text().startswith("Request reference")
+        assert page.locator(".request-reference b").inner_text().startswith("YC-")
 
         page.goto(base_url + "/admin/login")
         page.fill('input[name="username"]', "browser_admin")
