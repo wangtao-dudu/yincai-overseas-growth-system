@@ -304,7 +304,7 @@ assert content_client.post("/admin/content", data={
     "metric_3_value": "3", "metric_3_label": "测试", "video_title": "测试", "video_body": "测试",
     "video_url": "", "cta_title": "测试", "cta_body": "测试",
 }).status_code == 302
-assert b"内容运营交互验证" in content_client.get("/admin/content/preview/zh").data
+assert "内容运营交互验证".encode() in content_client.get("/admin/content/preview/zh").data
 
 finance_client, finance_csrf = role_clients["财务"]
 assert finance_client.post(f"/admin/orders/{order_id}/payment", data={"csrf_token": finance_csrf, "amount": 10, "currency": "USD", "payment_date": "2026-09-14", "method": "角色测试"}).status_code == 302
