@@ -78,7 +78,7 @@ try:
         page.goto(base_url + "/admin/login")
         page.fill('input[name="username"]', "browser_admin")
         page.fill('input[name="password"]', "Browser-admin-2026!")
-        page.locator('button[type="submit"]').click()
+        page.locator('form button').click()
         page.wait_for_url("**/admin")
         assert page.locator(".sidebar").is_visible()
         page.goto(base_url + "/admin/content")
