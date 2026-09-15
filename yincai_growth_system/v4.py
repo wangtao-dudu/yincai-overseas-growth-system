@@ -589,14 +589,13 @@ def register_v4(app, get_db, login_required, now, audit, upload_folder):
                         set_setting(db, "draft_site_video_file", filename)
                         if action == "publish":
                             set_setting(db, "site_video_file", filename)
-                        if old and old != filename:
-                            remove_upload(old)
+                        # Retain immutable media: live pages and historical versions may still reference it.
                     if request.form.get("remove_video"):
                         old = load_content(db, language, draft=True).get("video_file")
                         set_setting(db, "draft_site_video_file", "")
                         if action == "publish":
                             set_setting(db, "site_video_file", "")
-                        remove_upload(old)
+                        # Detach only; historical versions must remain recoverable.
                     set_setting(db, "draft_site_video_url", video_url)
                     if action == "publish":
                         current_draft_video = load_content(db, language, draft=True).get("video_file", "")
@@ -614,7 +613,7 @@ def register_v4(app, get_db, login_required, now, audit, upload_folder):
                     value = request.form.get(field, "").strip()
                     set_setting(db, f"site_{language}_{field}", value)
                     set_setting(db, f"draft_site_{language}_{field}", value)
-                snapshot = load_content(db, language, draft=True)
+                snapshot = load_content(db, language, draft=False)
                 db.execute(
                     "INSERT INTO content_versions(language,payload,created_by,created_at) VALUES(?,?,?,?)",
                     (language, json.dumps(snapshot, ensure_ascii=False), session.get("username"), now())

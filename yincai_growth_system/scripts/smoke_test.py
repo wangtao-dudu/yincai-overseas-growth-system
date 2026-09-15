@@ -464,3 +464,31 @@ for label in ("首页首屏", "解决方案", "能力与流程", "产品中心",
     assert label.encode() in workspace
 assert b"/admin/products" in workspace and b"/admin/translations" in workspace
 print("V4.2 structured page CMS tests passed")
+
+
+# Content safety: published history excludes unrelated drafts; historical media survives edits.
+import json
+client.post("/admin/content", data={"csrf_token": csrf, "language": "en", "page": "solutions", "action": "draft", "solutions_title": "UNPUBLISHED-ISOLATION-PROBE"})
+client.post("/admin/content", data={"csrf_token": csrf, "language": "en", "page": "products", "action": "publish", "products_title": "Published independently"})
+with app.app_context():
+    snapshot = json.loads(get_db().execute("SELECT payload FROM content_versions ORDER BY id DESC LIMIT 1").fetchone()["payload"])
+    assert snapshot["solutions_title"] != "UNPUBLISHED-ISOLATION-PROBE"
+
+def post_video(action, name):
+    return client.post("/admin/content", data={
+        "csrf_token": csrf, "language": "en", "page": "home", "action": action,
+        "video": (io.BytesIO(b"\\x00\\x00\\x00\\x18ftypisom" + b"0" * 20), name),
+    }, content_type="multipart/form-data")
+
+assert post_video("publish", "first.mp4").status_code == 302
+with app.app_context():
+    original_media = get_db().execute("SELECT value FROM settings WHERE key='site_video_file'").fetchone()["value"]
+assert post_video("draft", "replacement.mp4").status_code == 302
+assert client.get("/uploads/" + original_media).status_code == 200
+with app.app_context():
+    assert get_db().execute("SELECT value FROM settings WHERE key='site_video_file'").fetchone()["value"] == original_media
+assert client.post("/admin/content", data={
+    "csrf_token": csrf, "language": "en", "page": "home", "action": "draft", "remove_video": "on"
+}).status_code == 302
+assert client.get("/uploads/" + original_media).status_code == 200
+print("V4.2 content publication and media isolation tests passed")
