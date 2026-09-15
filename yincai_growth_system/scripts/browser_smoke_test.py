@@ -111,7 +111,8 @@ try:
         assert page.locator('input[name="hero_kicker"]').count() == 0
         page.fill('input[name="selector_title"]', "Browser-managed selector")
         page.locator('button[name="action"][value="draft"]').click()
-        page.wait_for_url("**page=selector")
+        page.wait_for_load_state("networkidle")
+        assert "page=selector" in page.url
         with context.expect_page() as selector_preview_info:
             page.locator('.sticky-save a[href*="/admin/content/preview/"]').click()
         selector_preview = selector_preview_info.value
