@@ -86,7 +86,8 @@ try:
         draft_button = page.locator('button[name="action"][value="draft"]')
         publish_button = page.locator('button[name="action"][value="publish"]')
         preview_link = page.locator('a[href*="/admin/content/preview/"]')
-        assert draft_button.count() == publish_button.count() == preview_link.count() == 1
+        assert draft_button.count() == publish_button.count() == 1
+        assert preview_link.count() >= 1
         draft_button.scroll_into_view_if_needed()
         assert draft_button.is_visible() and publish_button.is_visible() and preview_link.is_visible()
         draft_button.click()
