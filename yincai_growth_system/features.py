@@ -170,9 +170,13 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
         if request.method == "POST":
             username = request.form["username"].strip()
             password = request.form["password"]
+            role = request.form.get("role", "")
+            if not username or len(password) < 12 or role not in {*permissions.keys(), "管理员"}:
+                flash("用户名不能为空，密码至少十二位，并请选择有效岗位", "error")
+                return redirect(url_for("users"))
             try:
-                cur = db.execute("INSERT INTO users(username,password_hash,role,created_at) VALUES(?,?,?,?)", (username, generate_password_hash(password), request.form["role"], now()))
-                audit("创建用户", "user", cur.lastrowid, f"岗位：{request.form['role']}")
+                cur = db.execute("INSERT INTO users(username,password_hash,role,created_at) VALUES(?,?,?,?)", (username, generate_password_hash(password), role, now()))
+                audit("创建用户", "user", cur.lastrowid, f"岗位：{role}")
                 db.commit(); flash("用户已创建", "success")
             except sqlite3.IntegrityError: flash("用户名已经存在", "error")
             return redirect(url_for("users"))
@@ -182,8 +186,15 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
     @login_required
     @admin_only
     def reset_password(user_id):
-        get_db().execute("UPDATE users SET password_hash=? WHERE id=?", (generate_password_hash(request.form["password"]), user_id))
-        audit("重置密码", "user", user_id); get_db().commit(); flash("密码已重置", "success")
+        password = request.form.get("password", "")
+        if len(password) < 12:
+            flash("新密码至少十二位", "error")
+            return redirect(url_for("users"))
+        db = get_db()
+        cursor = db.execute("UPDATE users SET password_hash=? WHERE id=?", (generate_password_hash(password), user_id))
+        if not cursor.rowcount:
+            abort(404)
+        audit("重置密码", "user", user_id); db.commit(); flash("密码已重置", "success")
         return redirect(url_for("users"))
 
     @app.route("/admin/catalog-rules", methods=["GET", "POST"])
@@ -253,9 +264,20 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
     @app.post("/admin/orders/<int:order_id>/payment")
     @login_required
     def record_payment(order_id):
-        db = get_db(); amount = float(request.form["amount"]); stamp = now()
+        db = get_db()
+        order = db.execute("SELECT amount,paid_amount FROM orders WHERE id=?", (order_id,)).fetchone()
+        if not order:
+            abort(404)
+        try:
+            amount = float(request.form.get("amount", ""))
+        except (TypeError, ValueError):
+            amount = 0
+        if amount <= 0:
+            flash("回款金额必须大于零", "error")
+            return redirect(url_for("admin_operations"))
+        stamp = now()
         db.execute("INSERT INTO payments(order_id,amount,currency,payment_date,method,reference_no,status,notes,created_at) VALUES(?,?,?,?,?,?,?,?,?)", (order_id, amount, request.form.get("currency", "USD"), request.form.get("payment_date"), request.form.get("method"), request.form.get("reference_no"), "已确认", request.form.get("notes"), stamp))
-        order = db.execute("SELECT amount,paid_amount FROM orders WHERE id=?", (order_id,)).fetchone(); paid = (order["paid_amount"] or 0)+amount
+        paid = (order["paid_amount"] or 0) + amount
         status = "已付清" if paid >= order["amount"] else "部分付款"
         db.execute("UPDATE orders SET paid_amount=?,payment_status=?,updated_at=? WHERE id=?", (paid,status,stamp,order_id)); audit("登记回款", "order", order_id, str(amount)); db.commit(); flash("回款已登记", "success"); return redirect(url_for("admin_operations"))
 
@@ -452,4 +474,7 @@ def register_features(app, get_db, login_required, now, audit, db_path, upload_f
     def api_company_score(company_id):
         token=request.headers.get("Authorization","").removeprefix("Bearer ")
         if token != os.getenv("API_TOKEN","") or not token: return jsonify({"error":"unauthorized"}),401
-        score,grade=calculate_company_score(get_db(),company_id); get_db().commit(); row=get_db().execute("SELECT score_reason FROM companies WHERE id=?",(company_id,)).fetchone(); return jsonify({"company_id":company_id,"score":score,"grade":grade,"reason":row["score_reason"]})
+        db = get_db()
+        if not db.execute("SELECT id FROM companies WHERE id=?", (company_id,)).fetchone():
+            return jsonify({"error": "company not found"}), 404
+        score,grade=calculate_company_score(db,company_id); db.commit(); row=db.execute("SELECT score_reason FROM companies WHERE id=?",(company_id,)).fetchone(); return jsonify({"company_id":company_id,"score":score,"grade":grade,"reason":row["score_reason"]})

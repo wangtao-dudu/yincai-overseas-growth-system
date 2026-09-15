@@ -1,3 +1,4 @@
+import io
 import os
 import sys
 import tempfile
@@ -12,6 +13,7 @@ os.environ["UPLOAD_FOLDER"] = os.path.join(temporary.name, "uploads")
 os.environ["SECRET_KEY"] = "test-secret-key"
 os.environ["ADMIN_USERNAME"] = "tester"
 os.environ["ADMIN_PASSWORD"] = "safe-test-password"
+os.environ["API_TOKEN"] = "test-api-token"
 
 from app import app, get_db
 
@@ -321,3 +323,110 @@ with app.app_context():
     assert db.execute("SELECT feedback FROM samples WHERE id=?", (sample_id,)).fetchone()["feedback"] == "交付岗位交互验证"
 
 print("V4.2 role matrix and interaction tests passed")
+
+
+# Extended interaction coverage: uploads, imports, APIs, restore, passwords and session exit
+valid_png = b"\x89PNG\r\n\x1a\n" + b"verified-image-payload"
+edit_response = client.post(
+    f"/admin/products/{product_id}/edit",
+    data={
+        "csrf_token": csrf, "name": "30ml Airless Bottle", "category": "Airless bottle",
+        "capacity": "30ml", "material": "PP", "moq": "1000", "published": "on",
+        "summary": "Edited through interaction test",
+        "image": (io.BytesIO(valid_png), "verified.png"),
+    },
+    content_type="multipart/form-data",
+)
+assert edit_response.status_code == 302
+with app.app_context():
+    uploaded_image = get_db().execute("SELECT image FROM products WHERE id=?", (product_id,)).fetchone()["image"]
+assert uploaded_image and client.get(f"/uploads/{uploaded_image}").status_code == 200
+
+bad_upload = client.post(
+    "/admin/products",
+    data={"csrf_token": csrf, "name": "Rejected upload", "published": "on", "image": (io.BytesIO(b"not-an-image"), "fake.png")},
+    content_type="multipart/form-data",
+)
+assert bad_upload.status_code == 302
+with app.app_context():
+    assert get_db().execute("SELECT COUNT(*) n FROM products WHERE name='Rejected upload'").fetchone()["n"] == 0
+
+quote_with_attachment = client.post(
+    "/en/request-quote",
+    data={
+        "csrf_token": csrf, "company_name": "Attachment Test Brand", "contact_name": "Buyer",
+        "email": "attachment@example.com", "product": "Airless bottle", "quantity": "5000",
+        "consent": "yes", "lang": "en",
+        "reference_file": (io.BytesIO(b"%PDF-1.4\nverified reference"), "reference.pdf"),
+    },
+    content_type="multipart/form-data",
+)
+assert quote_with_attachment.status_code == 200 and b"REQUEST RECEIVED" in quote_with_attachment.data
+with app.app_context():
+    attachment_name = get_db().execute("SELECT attachment FROM inquiries WHERE email='attachment@example.com'").fetchone()["attachment"]
+assert attachment_name and client.get(f"/uploads/{attachment_name}").status_code == 200
+
+csv_payload = "company_name,country,contact_name,email\nCSV Role Company,France,CSV Buyer,csv@example.com\n".encode()
+overseas, overseas_csrf = role_clients["海外负责人"]
+csv_response = overseas.post(
+    "/admin/acquisition",
+    data={"csrf_token": overseas_csrf, "csv_file": (io.BytesIO(csv_payload), "leads.csv")},
+    content_type="multipart/form-data",
+)
+assert csv_response.status_code == 302
+with app.app_context():
+    assert get_db().execute("SELECT COUNT(*) n FROM companies WHERE name='CSV Role Company'").fetchone()["n"] == 1
+
+assert client.post("/api/v1/events", json={}).status_code == 400
+assert client.post("/api/v1/events", json={"event_name": "interaction_test", "source": "ci"}).status_code == 201
+assert client.post("/api/v1/leads", json={"company_name": "Unauthorized", "email": "no@example.com"}).status_code == 401
+api_lead = client.post(
+    "/api/v1/leads",
+    headers={"Authorization": "Bearer test-api-token"},
+    json={"company_name": "API Role Company", "contact_name": "API Buyer", "email": "api@example.com", "country": "Spain"},
+)
+assert api_lead.status_code == 201 and api_lead.get_json()["company_id"]
+assert client.get(f"/api/v1/intelligence/company/{company_id}").status_code == 401
+api_score = client.get(f"/api/v1/intelligence/company/{company_id}", headers={"Authorization": "Bearer test-api-token"})
+assert api_score.status_code == 200 and 0 <= api_score.get_json()["score"] <= 100
+assert client.get("/api/v1/intelligence/company/999999", headers={"Authorization": "Bearer test-api-token"}).status_code == 404
+
+with app.app_context():
+    version_id = get_db().execute("SELECT id FROM content_versions ORDER BY id DESC LIMIT 1").fetchone()["id"]
+content_client, content_csrf = role_clients["内容运营"]
+restore = content_client.post(f"/admin/content/restore/{version_id}", data={"csrf_token": content_csrf})
+assert restore.status_code == 302
+assert content_client.get("/admin/content/preview/en").status_code == 200
+
+with app.app_context():
+    task_id = get_db().execute("SELECT id FROM tasks WHERE status!='已完成' ORDER BY id DESC LIMIT 1").fetchone()["id"]
+sales_client, sales_role_csrf = role_clients["销售"]
+assert sales_client.post(f"/admin/tasks/{task_id}/complete", data={"csrf_token": sales_role_csrf}).status_code == 302
+with app.app_context():
+    assert get_db().execute("SELECT status FROM tasks WHERE id=?", (task_id,)).fetchone()["status"] == "已完成"
+
+finance_client, finance_csrf = role_clients["财务"]
+with app.app_context():
+    payment_count = get_db().execute("SELECT COUNT(*) n FROM payments WHERE order_id=?", (order_id,)).fetchone()["n"]
+assert finance_client.post(f"/admin/orders/{order_id}/payment", data={"csrf_token": finance_csrf, "amount": -1}).status_code == 302
+with app.app_context():
+    assert get_db().execute("SELECT COUNT(*) n FROM payments WHERE order_id=?", (order_id,)).fetchone()["n"] == payment_count
+assert finance_client.post("/admin/orders/999999/payment", data={"csrf_token": finance_csrf, "amount": 1}).status_code == 404
+
+with app.app_context():
+    product_user_id = get_db().execute("SELECT id FROM users WHERE username='product_test'").fetchone()["id"]
+    old_hash = get_db().execute("SELECT password_hash FROM users WHERE id=?", (product_user_id,)).fetchone()["password_hash"]
+assert client.post(f"/admin/users/{product_user_id}/password", data={"csrf_token": csrf, "password": "short"}).status_code == 302
+with app.app_context():
+    assert get_db().execute("SELECT password_hash FROM users WHERE id=?", (product_user_id,)).fetchone()["password_hash"] == old_hash
+assert client.post(f"/admin/users/{product_user_id}/password", data={"csrf_token": csrf, "password": "New-product-role-2026!"}).status_code == 302
+new_product_client, _ = login_as("product_test", "New-product-role-2026!")
+assert new_product_client.get("/admin/products").status_code == 200
+
+logout_client, logout_csrf = login_as("delivery_test", "Delivery-role-2026!")
+assert logout_client.post("/admin/logout", data={"csrf_token": logout_csrf}).status_code == 302
+assert logout_client.get("/admin").status_code == 302
+
+assert client.get(f"/admin/products/{product_id}/edit").status_code == 200
+assert client.get(f"/admin/companies/{company_id}").status_code == 200
+print("V4.2 extended interaction tests passed")
